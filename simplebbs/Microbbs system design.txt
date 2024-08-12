@@ -1,0 +1,126 @@
+#						微型论坛系统设计
+
+#############################################################################
+#																			#
+#					一、基本组成信息设计									#
+#																			#
+#############################################################################
+
+
+1.用户信息 => users
+-----------------------------------------------------------------------------
+// 必选项
+(1)Email(或Id) => email VARCHAR(40) NOT NULL UNIQUE
+(2)密码 => password CHAR(40) NOT NULL
+(3)昵称 => name VARCHAR(16) NOT NULL UNIQUE
+(4)性别 => sex CHAR(1) NOT NULL
+(5)签名 => sign VARCHAR(200) DEFAULT NULL
+(6)注册日期 => registration_date DATETIME NOT NULL
+
+// 以下是可选项
+(7)头像
+(8)地址
+(9)生日
+(10)上次登录日期
+(11)积分(或等级)
+(12)其他
+
+
+2.帖子 => invitations
+-----------------------------------------------------------------------------
+(1)发贴人信息 => users.user_id INT UNSIGNED NOT NULL
+(2)最后回帖者 => last_user_id INT UNSIGNED DEFAULT NULL
+	####################################################
+		(1)回帖人				// 与 用户信息 关联
+		(2)签名					// 与 用户信息 关联
+	####################################################
+(3)最后/新回帖时间 => latest_date DATETIME NOT NULL
+(4)发帖时间 => new_date DATETIME NOT NULL
+(5)帖子标题 => title VARCHAR(100) NOT NULL
+(6)帖子内容 => content TEXT NOT NULL
+
+
+3.帖子信息单元 => invitation_unit
+-----------------------------------------------------------------------------
+(1)所属帖子 => invitations.invitation_id INT UNSIGNED NOT NULL
+(2)回帖人信息 => users.user_id INT UNSIGNED NOT NULL
+	####################################################
+		(1)回帖人				// 与 用户信息 关联
+		(2)签名					// 与 用户信息 关联
+	####################################################
+(3)楼号 => floor SMALLINT UNSIGNED NOT NULL
+(4)回帖时间 => reply_date DATETIME NOT NULL
+(5)帖子内容 => content TEXT NOT NULL
+
+
+#############################################################################
+#																			#
+#					二、数据库关系设计及建立								#
+#																			#
+#############################################################################
+
+
+1.数据库设计:
+
+	+-----------+---------------------------+-----------------------|---------------------------+
+	|	TABLE	|	users					|	invitations		|	invitation_unit		|
+	+-----------+---------------------------+-----------------------+---------------------------+
+	|	c		|	user_id				|	invitation_id	|	invitation_unit_id	|
+	|	l		|	email					|	user_id			|	invitation_id		|
+	|	o		|	password				|	last_user_id		|	user_id				|
+	|	u		|	name					|	new_date			|	floor					|
+	|	m		|	sex						|	title				|	reply_date			|
+	|	n		|	sign					|	content			|	content				|
+	|	s		|	registration_date	|	latest_date		|			——				|
+	+-----------+---------------------------+-----------------------+---------------------------+
+
+
+2.数据库的建立:
+
+(1)建立Microbbs的数据库:
+-----------------------------------------------------------------------------
+CREATE DATABASE microbbs
+
+
+3.数据库相关表的建立:
+
+(1)建立存储用户信息的user表:
+-----------------------------------------------------------------------------
+CREATE TABLE users (
+user_id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
+email VARCHAR(40) NOT NULL ,
+password CHAR(40) NOT NULL ,
+name VARCHAR(16) NOT NULL ,
+sex CHAR(1) NOT NULL ,
+sign VARCHAR(200) DEFAULT NULL ,
+registration_date DATETIME NOT NULL ,
+PRIMARY KEY( user_id ) ,
+UNIQUE( email ) ,
+UNIQUE( name )
+)
+
+(2)建立存储帖子单元的invitation_unit表:
+-----------------------------------------------------------------------------
+CREATE TABLE invitation_unit (
+invitation_unit_id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
+invitation_id INT UNSIGNED NOT NULL ,
+user_id INT UNSIGNED NOT NULL ,
+floor SMALLINT UNSIGNED NOT NULL ,
+reply_date DATETIME NOT NULL ,
+content TEXT NOT NULL ,
+PRIMARY KEY( invitation_unit_id )
+)
+
+(3)建立存储帖子的invitations表:
+-----------------------------------------------------------------------------
+CREATE TABLE invitations (
+invitation_id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
+user_id INT UNSIGNED NOT NULL ,
+last_user_id INT UNSIGNED NOT NULL ,
+latest_date DATETIME NOT NULL ,
+new_date DATETIME NOT NULL ,
+title VARCHAR(100) NOT NULL ,
+content TEXT NOT NULL ,
+PRIMARY KEY( invitation_id )
+)
+

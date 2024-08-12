@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf8" />
+<title>Russian Cube</title>
+
+<style type="text/css">
+#main { width:400px; margin:auto; }
+#cubes { background:black; float:left; border: 1px solid black; }
+#attach { background:grey; float:left; }
+.cube { width:16px; height:16px; background-color:inherit; border:1px dotted black /*grey*/; float:left; }
+.unit { width:16px; height:16px; background-color:white; border: 1px dotted white /*blue*/; float:left; }
+.line { clear: left; }
+</style>
+</head>
+<body>
+	<div id="main">
+		<div id="cubes">
+		</div>
+		<div id="attach">Score: 0
+		</div>
+		<div style="clear: left; color:red; font-size: 12px;">&lt;- to left, space to pause</div>
+		<div style="clear: left; font-size: 12px;">Designed By Wind Fantasy @ 2011</div>
+	</div>
+<script type="text/javascript">
+<!--
+	/*
+	* center cube (r, c):
+	* 0. "I": (r-1,c), (r+1, c), (r+2, c)
+	* 1. "L": (r-1, c), (r+1, c), (r+1, c+1)
+	* 2. "J": (r-1, c), (r+1, c), (r+1, c-1)
+	* 3. "T": (r-1, c), (r+1, c), (r, c+1)
+	* 4. "Z": (r+1, c), (r, c+1), (r-1, c+1)
+	* 5. "S": (r-1, c), (r, c+1), (r+1, c+1)
+	* 6. "O": (r, c+1), (r-1, c), (r-1, c+1)
+	*/
+	var UnitType = {
+		I : 0,
+		L : 1,
+		J : 2,
+		T : 3,
+		Z : 4,
+		S : 5,
+		O : 6,
+		types : [
+			[ [-1, 0], [1, 0], [2, 0] ],
+			[ [-1, 0], [1, 0], [1, 1] ],
+			[ [-1, 0], [1, 0], [1, -1] ],
+			[ [-1, 0], [1, 0], [0, 1] ],
+			[ [1, 0], [0, 1], [-1, 1] ],
+			[ [-1, 0], [0, 1], [1, 1] ],
+			[ [0, 1], [1, 0], [1, 1] ]
+		]
+	};
+	var Direction = {
+		LEFT : 0,
+		UP : 1,
+		RIGHT : 2,
+		DOWN : 3
+	};
+	var Config = {
+		ID: null, // setInterval ID,,, reserved and should be initialized to null
+		SPEED: 480, // speed
+		ROLL_DIRECTION : -1, // 1: normal direction, 0: rand direction(hard), -1: reverse direction,,, reserved
+		HIDE_NEXT : false // hide next unit(s)(hard),,, reserved
+	}
+	
+	function attach(obj, event_type, handler) { // attach event "event_type" handler "handler" to object "obj"
+		if (! obj || ! event_type || ! handler) return;
+		if (typeof document.attachEvent != 'undefined') {
+			obj.attachEvent("on"+event_type, function () { window.event.returnValue = fale; return handler(event); } );
+		} else {
+			obj.addEventListener(event_type, function (evt) { evt.preventDefault(); return handler(evt); }, false );
+		}
+	}
+	
+	function rand(imin, imax) { // return a random int number in [imin, imax)
+	/*
+		imin = imin < 0 ? -imin : imin;
+		imax = imax < 0 ? -imax : imax;
+		if (imin > imax) {
+			var temp = imin;
+			imax = imin;
+			imax = temp;
+		}
+	*/
+		var idiff = imax - imin;
+		return imin + Math.floor(idiff*Math.random());
+	}
+	
+	function Tetris(rows, cols) {
+		this.rows = parseInt(rows, 10);
+		this.cols = parseInt(cols, 10);
+		this.count = this.rows * this.cols;
+		// the whole map for Tetris game
+		this.cubes = new Array(this.rows);
+		for (var i=0; i < this.rows; ++i) this.cubes[i] = new Array(this.cols);
+		// current four-cube unit
+		this.unit = new Array(5); // unit[0] holds center cube, while unit[4] holds UnitType
+		this.score = 0;
+		this.over = false;
+		this.pause = false;
+	}
+	Tetris.prototype.buildAfter = function (obj) { // build the map after DOM node "obj"
+		if (! obj) return;
+		var innerhtml = [];
+		var suffix = (typeof obj.id != 'string') ? '' : obj.id;
+		var i, j;
+		for (i=0; i < this.rows; ++i) {
+			innerhtml.push('<div class="line">');
+			for (j=0; j < this.cols; ++j) {
+				innerhtml.push('<div class="cube" id="' + (j + i * this.cols) + '_' + suffix + '"><\/div>');
+			}
+			innerhtml.push('<\/div>');
+		}
+		obj.innerHTML = innerhtml.join('');
+		for (i=0; i < this.rows; ++i)
+			for (j=0; j < this.cols; ++j) {
+				this.cubes[i][j] = document.getElementById((i*this.cols + j) + '_' + suffix);
+				this.cubes[i][j].row = i;
+				this.cubes[i][j].col = j;
+			}
+	}
+	Tetris.prototype.makeAUnit = function () { // make a four-cube unit to continue the game
+		var which_type = rand(0, UnitType.types.length);
+		var t = UnitType.types[ which_type ];
+		var r = 1;
+		var c = Math.floor(rc.cols/2);
+		c = (which_type != UnitType.J) ? (c - 1) : c;
+		
+		for (var i=0; i < 3; ++i) { // t.length == 3
+			this.unit[i+1] = this.cubes[(r + t[i][0])][(c + t[i][1])];
+			this.unit[i+1].className = "unit";
+		}
+
+		this.unit[0] = this.cubes[r][c];
+		this.unit[0].className = "unit";
+		this.unit[4] = which_type;
+	}
+	// return if any cube in unit can move to (row, col)
+	Tetris.prototype.validTo = function(row, col) {
+		if (row < 0 || row >= this.rows || col < 0 || col >= this.cols)
+			return false;
+		for (var i=0; i < 4; ++i) {
+			if (this.unit[i].row == row && this.unit[i].col == col)
+				return true;
+		}
+		return (this.cubes[row][col].className != 'unit');
+	}
+	Tetris.prototype.rollTo = function(roll_direction) {
+		var oldunit = this.unit;
+		var newpos = [ new Array(4), new Array(4) ]; // newpos[0] holds new rows, newpos[1] holds new cols
+		var r0 = oldunit[0].row, c0 = oldunit[0].col;
+
+		var i, r, c;
+		switch (roll_direction) {
+		case 1:
+		case -1:
+			for (i=0; i < 4; ++i) { // center cube is not changed
+				r = oldunit[i].row;
+				c = oldunit[i].col;
+				newpos[0][i] = r0 + roll_direction * (c - c0) - r;
+				newpos[1][i] = c0 + roll_direction * (r0 - r) - c;
+			}
+			break;
+		case 0:
+			break;
+		}
+		return newpos;
+	}
+	Tetris.prototype.clear = function () {
+		var min_row, max_row;
+		var i, j, full;
+
+		min_row = max_row = this.unit[0].row;
+		for (i=1; i < 4; ++i) {
+			j = this.unit[i].row;
+			min_row = (min_row > j) ? j : min_row;
+			max_row = (max_row < j) ? j : max_row;
+		}
+		
+		var row_reserve = [];
+		for (i=max_row; i >= min_row; --i) {
+			full = true;
+			for (j=0; j < this.cols; ++j) {
+				if (this.cubes[i][j].className == 'cube') {
+					full = false;
+					break;
+				}
+			}
+			if (full) {
+				for (j=0; j < this.cols; ++j) {
+					this.cubes[i][j].className = 'cube';
+				}
+			} else {
+				row_reserve.push(i);
+			}
+		}
+
+		var end = max_row - row_reserve.length + 1;
+		for (i=max_row; i >= end; --i) {
+			if (i != row_reserve[max_row - i]) {
+				for (j=0; j < this.cols; ++j) {
+					this.cubes[i][j].className = this.cubes[ (row_reserve[max_row - i]) ][j].className;
+				}
+			}
+		}
+
+		var len = end - min_row;
+		if (len > 0) {
+			this.score += [100, 300, 700, 1600][len-1];
+			document.getElementById("attach").innerHTML = 'Score: ' + this.score;
+		}
+		
+		for (i=end-1; i >= len; --i) {
+			for (j=0; j < this.cols; ++j) {
+				this.cubes[i][j].className = this.cubes[i-len][j].className;
+			}
+		}
+		for (i=0; i < len; ++i) {
+			for (j=0; j < this.cols; ++j) {
+				this.cubes[i][j].className = 'cube';
+			}
+		}
+
+		this.makeAUnit();
+		
+		if (min_row <= 1) {
+			this.over = true;
+			if (Config.ID) {
+				clearInterval(Config.ID);
+				Config.ID = 0;
+			}
+			alert('Game Over!');
+			document.location.reload();
+		}
+	}
+	// If current unit can move to "direction", move and return true; else return false.
+	Tetris.prototype.moveTo = function (direction) {
+
+		var row_diff, col_diff;
+		switch (direction) {
+		case Direction.LEFT:
+		case Direction.RIGHT:
+			row_diff = [0, 0, 0, 0];
+			col_diff = (direction == Direction.LEFT) ? [-1, -1, -1, -1] : [1, 1, 1, 1];
+			break;
+		case Direction.DOWN: // do more things
+			row_diff = [1, 1, 1, 1];
+			col_diff = [0, 0, 0, 0];
+			break;
+		case Direction.UP: // do more things
+			var roll = this.rollTo(Config.ROLL_DIRECTION);
+			row_diff = roll[0];
+			col_diff = roll[1];
+			break;
+		}
+
+		var oldunit = this.unit;
+		var new_row = new Array(4);
+		var new_col = new Array(4);
+		var i;
+		for (i=0; i < 4; ++i) {
+			new_row[i] = oldunit[i].row + row_diff[i];
+			new_col[i] = oldunit[i].col + col_diff[i];
+			if (! this.validTo(new_row[i], new_col[i])) {
+				if (direction == Direction.DOWN) {
+					this.clear();
+				}
+				return false;
+			}
+		}
+		for (i=0; i < 4; ++i) {
+			oldunit[i].className = 'cube';
+			this.unit[i] = this.cubes[ (new_row[i]) ][ (new_col[i]) ];
+		}
+		for (i=0; i < 4; ++i) {
+			this.unit[i].className = 'unit';
+		}
+		return true;
+	}
+	function handler(evt) {
+		if (rc.over) return false;
+		
+		var key = evt.keyCode || evt.which;
+		if (Config.ID && key <= 40 && key >= 37) { // not pause
+			// left:37, up:38, right:39, down:40
+			var directions = [Direction.LEFT, Direction.UP, Direction.RIGHT, Direction.DOWN];
+			rc.moveTo(directions[key-37]);
+		} else if (key == 32) { // space
+			if (Config.ID) {
+				clearInterval(Config.ID);
+				Config.ID = null;
+			} else {
+				Config.ID = set_timer(Config.SPEED);
+			}
+		}
+		
+		return false;
+	}
+	function set_timer(speed) {
+		return setInterval(function () { rc.moveTo(Direction.DOWN); }, speed);
+	}
+	window.onload = function () {
+		var cubes = document.getElementById("cubes");
+		rc = new Tetris(20, 10); // make rc global
+		rc.buildAfter(cubes);
+		rc.makeAUnit();
+		Config.ID = set_timer(Config.SPEED);
+		
+		if (navigator.appName.search(/opera/i) != -1) { // Opera browser
+			attach(document, "keypress", handler);
+		} else {
+			attach(document, "keydown", handler);
+		}
+		
+		window.focus();
+	}
+// -->
+</script>
+</body>
+</html>

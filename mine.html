@@ -1,0 +1,538 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=gbk" />
+<title>Mine Game</title>
+
+<style type="text/css">
+body { 
+font-family:sans; 
+font-size: 15px; 
+line-height:16px; 
+}
+
+#mine table { 
+margin:auto; 
+border-spacing:0; 
+border:1px solid green; 
+text-align:center; 
+}
+
+#mine td { 
+border:lightgreen 1px outset; 
+width:15px; 
+height:16px; 
+background-color:#dddd77; 
+cursor:pointer; 
+}
+
+tr.hide { 
+visibility:visible; 
+color:Olive; 
+}
+
+tr.hide input { 
+background-color:white; 
+}
+
+a#option { 
+text-decoration:none; 
+}
+
+a#option:hover { 
+background-color:lightblue; 
+color:red; 
+}
+
+a#option { 
+color:green; 
+}
+</style>
+
+<script type="text/javascript" language="javascript">
+<!--
+var line, row, mineCount, count ;
+var mineMap, isMine, gameOver, timeCounter, setTimeoutId, havePlayed ;
+var colorSet = new Array( "lightgreen", "blue", "purple", "red", "green", "olive", "fuchsia", "maroon", "gray" ) ;
+
+function set_map( l, r, mC, gO, hP ) { // basic settings
+	line = l ;
+	row = r ;
+	mineCount = mC ;
+	count = l*r ;
+	gameOver = gO ;
+	havePlayed = hP ;
+}
+
+function get_random_number( maxNumber ) { // returns a random number in interval: [ 0, maxNumber )
+	return Math.floor( maxNumber*Math.random() ) ;
+}
+
+function init_mine_use() { // initialize mine map using situation
+	isMine = new Array( count ) ;
+	for( var i=0; i<isMine.length; i++ ) {
+		isMine[i] = false ;
+	}
+}
+
+function create_mine_map() { // create a random mine map
+	init_mine_use() ;
+	var i, randomNumber ;
+	mineMap = new Array( mineCount ) ;
+	for( i=0; i<mineMap.length; i++ ) {
+		randomNumber = get_random_number( isMine.length ) ;
+		if( isMine[randomNumber] == true )
+			i-- ;
+		else {
+			isMine[randomNumber] = true ;
+			mineMap[i] = randomNumber ;
+		}
+	}
+}
+
+// define the event handler function
+function move_over() { // when mouse moves over the square
+	if( gameOver == true )
+		return ;
+	this.style.backgroundColor = "orange" ;
+}
+
+function move_out() { // when mouse moves out of the square
+	if( gameOver == true )
+		return ;
+	if( this.clicked == true )
+		this.style.backgroundColor = "lightgreen" ;
+	else
+		this.style.backgroundColor = "#dddd77" ;
+}
+
+function click_on( evt ) {
+	var mouseClick = evt ? evt.which : window.event.button ;
+	var square = this ;
+
+	if( gameOver == true )
+		return ;
+	if( mouseClick == 1 ) {
+		if( square.locked == false ) {
+			if( square.clicked == false ) {
+				if( havePlayed == false ) {
+					havePlayed = true ;
+					time_caculate() ;
+				}
+				if( square.value > 0 ) {
+					square.style.backgroundColor = "lightgreen" ;
+					square.style.borderStyle = "inset" ;
+					square.innerHTML = square.value ;
+					square.style.color = colorSet[square.value] ;
+					square.clicked = true ;
+				}
+				else if( square.value == 0 ) {
+					square.style.backgroundColor = "lightgreen" ;
+					square.style.borderStyle = "inset" ;
+					search_empty_square( this.x, this.y ) ;
+				}
+				else{ // square.value < 0
+					game_failed( square ) ; // failed due to step on THE "square"
+					return ;
+				}
+				check_if_succeed() ;
+			}
+		}
+	} else if( mouseClick == 0 || mouseClick == 2 || mouseClick == 3 ) {
+		lock_square( this ) ;
+	}
+}
+
+function check_if_succeed() {
+	var displayed_count = 0 ;
+	for( var i=0; i<count; i++ )
+		if( document.getElementById( i ).clicked == true )
+			displayed_count++ ;
+		if( displayed_count + mineCount == count ) {
+			gameOver = true ;
+			clearTimeout( setTimeoutId ) ;
+			setTimeoutId = "have cleared" ;
+			var prpt = "恭喜你，你赢了！你的成绩是：" + parseInt(timeCounter.value, 10) + "秒 (在如下地图:" + line + "X" + row + " " + mineCount + "个地雷)\n请问是否想玩另外一局?"
+			if( confirm( prpt ) ) {
+				set_map( line, row, mineCount, false, false ) ;
+				new_game() ;
+			}
+		}
+}
+
+function search_empty_square( sx, sy ) // first invoked with square.value == 0
+{
+	var square = document.getElementById( sx*row+sy ) ;
+	if( square.value >=0 && square.locked == false ) {
+		square.clicked = true ;
+		square.innerHTML = ( square.value == 0 ) ? "&nbsp;" : square.value ;
+		square.style.color = colorSet[ square.value ] ;
+		square.style.border = "1px lightgreen inset" ;
+		square.style.backgroundColor = "lightgreen" ;
+		if( square.value == 0 ) {
+			if( sx>0 ) {
+				if( sy>0 && !document.getElementById((sx-1)*row+(sy-1)).clicked )
+					search_empty_square( sx-1, sy-1 ) ;
+				if( !document.getElementById((sx-1)*row+sy).clicked )
+					search_empty_square( sx-1, sy ) ;
+				if( sy<row-1 && !document.getElementById((sx-1)*row+(sy+1)).clicked )
+					search_empty_square( sx-1, sy+1 ) ;
+			}
+			if( sy>0 && !document.getElementById(sx*row+(sy-1)).clicked )
+				search_empty_square( sx, sy-1 ) ;
+			if( sy<row-1 && !document.getElementById(sx*row+(sy+1)).clicked )
+				search_empty_square( sx, sy+1 ) ;
+			if( sx<line-1 ) {
+				if( sy>0 && !document.getElementById((sx+1)*row+(sy-1)).clicked )
+					search_empty_square( sx+1, sy-1 ) ;
+				if( !document.getElementById((sx+1)*row+sy).clicked )
+					search_empty_square( sx+1, sy ) ;
+				if( sy<row-1 && !document.getElementById((sx+1)*row+(sy+1)).clicked )
+					search_empty_square( sx+1, sy+1 ) ;
+			}
+		}
+	}
+}
+
+function lock_square( square )
+{
+	if( square.clicked == false ) { // &nbsp; -> # -> ? ->&nbsp;
+		if( square.innerHTML != "#" && square.innerHTML != "?" ) {
+			square.style.color = "darkblue" ;
+			square.innerHTML = "#" ;
+			square.locked = true ;
+		} else {
+			if( square.innerHTML == "#" ) {
+				square.style.color = "black" ;
+				square.innerHTML = "?" ;
+			} else {
+				square.innerHTML = "&nbsp;" ;
+			}
+			square.locked = false ;
+		}
+	}
+}
+
+function game_failed( square ) {
+	var mine_square ;
+	gameOver = true ;
+	clearTimeout( setTimeoutId ) ;
+	setTimeoutId = "have cleared" ;
+	for( var i=0; i<mineMap.length; i++ ) {
+		mine_square = document.getElementById( mineMap[i] ) ;
+		mine_square.style.color = "red" ;
+		mine_square.style.backgroundColor = "orange" ;
+		mine_square.style.fontWeight = "bold" ;
+		mine_square.innerHTML = "*" ;
+	}
+	if( square.value < 0 )
+		square.style.backgroundColor = "purple" ;
+	if( confirm( "对不起，游戏失败，下次好运！\n请问是否想继续玩当前的地图？" ) == true )
+		restart_game() ; // continue current map
+}
+
+function double_click() {
+	if( this.locked == true || this.clicked == false || gameOver == true || this.value <= 0 || this.value >= 8 )
+		return ;
+	var i, j, X, Y, userMineCount=0, square ;
+	var lineArray, rowArray, wrongMine ;
+	lineArray = new Array() ;
+	rowArray = new Array() ;
+	wrongMine = new Array() ;
+	for( i=-1; i<=1; i++ )
+		for( j=-1; j<=1; j++ ) {
+			X = i + this.x ;
+			Y = j + this.y ;
+			if( 0<=X && X<line && 0<=Y && Y< row ) {
+				square = document.getElementById( row*X+Y ) ;
+				if( square.locked == true ) {
+					userMineCount++ ;
+					if( square.value >= 0 )
+						wrongMine.push( square ) ; // record wrong judgement of whether the square is mine or not
+				} else {
+					if( square.clicked == false ) {
+						lineArray.push( X ) ; // record the square which should be handled
+						rowArray.push( Y ) ;
+					}
+				}
+			}
+		}
+	if( userMineCount == this.value ) {
+		if( wrongMine.length == 0 ) {
+			for( i=0; i<lineArray.length; i++ )
+				search_empty_square( lineArray[i], rowArray[i] ) ;
+			check_if_succeed() ;
+		} else { // game failed
+			for( i=0; i<wrongMine.length; i++ ) {
+				wrongMine[i].style.backgroundColor = "purple" ;
+				wrongMine[i].style.color = "red" ;
+				wrongMine[i].innerHTML = ( wrongMine[i].value==0 ) ? "&nbsp;" : ( wrongMine[i].value ) ;
+			}
+			this.style.backgroundColor = "green" ;
+			game_failed( this ) ;
+		}
+	}
+}
+
+function init_map() { // initialize the whole map
+	var i, square ;
+	for( i=0; i<count; i++ ) {
+		// retrieve the square
+		square = document.getElementById( i ) ;
+		// initialize the extra data which need be added
+		square.value = 0 ;
+		square.clicked = false ;
+		square.locked = false ;
+		square.x = Math.floor( i/row ) ;
+		square.y = i - row*square.x ;
+		// initialize the event handler function
+		square.onmouseover = move_over ;
+		square.onmouseout = move_out ;
+		square.onmousedown = click_on;
+		square.ondblclick = double_click ;
+		// square.oncontextmenu = disable_rightkey_menu ;		
+	}
+}
+
+function build_map() { // build the map
+	var i, j, k, square, X, Y ;
+	for( k=0; k<mineMap.length; k++ ) {
+		square = document.getElementById( mineMap[k] ) ;
+		square.value = -10 ;
+		for( i=-1; i<=1; i++ )
+			for( j=-1; j<=1; j++ ) {
+				X = i + square.x ;
+				Y = j + square.y ;
+				if( 0<=X && X<line && 0<=Y && Y<row )
+					document.getElementById( row*X+Y ).value++ ;
+			}
+	}
+}
+
+function rebuild_table() {
+	var tb = document.createElement( "table" ) ;
+	tb.setAttribute( "width", 20*row ) ;
+	tb.oncontextmenu = function () { return false ; } ; // disable mouse right-click menu
+	var tr = tb.insertRow(0) ;
+	var td = tr.insertCell(0) ;
+	td.style.backgroundColor = "pink" ;
+	td.style.cursor = "default" ;
+	td.colSpan = row ; //td.setAttribute( "colspan", row ) ;
+	td.innerHTML = "<button id=\"play\" style=\"background-color:white; cursor:pointer;\" type=\"button\">新局</button> <input style=\"text-align:center; color:blue; background-color:yellow;\" id=\"timecounter\" size=\"4\" type=\"text\" value=\"0000\" readonly=\"readonly\"/" + ">" ;
+	for( var i=0; i<line; i++ ) {
+		tr = tb.insertRow( i+1 ) ;
+		for( var j=0; j<row; j++ ) {
+			td = tr.insertCell(j) ;
+			td.setAttribute( "id", i*row+j ) ;
+			td.innerHTML = "&nbsp;" ;
+		}
+	}
+	tr = tb.insertRow( i+1 ) ;
+	td = tr.insertCell( 0 ) ;
+	td.colSpan = row ; //td.setAttribute( "colspan", row ) ;
+	td.style.backgroundColor = "pink" ;
+	td.style.cursor = "default" ;
+	td.innerHTML = "<span style=\"float:right; color:blue;\">" + line + "X" + row + " " + mineCount + "mines</span>" ;
+	var m = document.getElementById( "mine" ) ;
+	// first we should remove the previous table
+	for( var i=0; i<m.childNodes.length; i++ )
+		m.removeChild( m.childNodes[0] ) ;
+	// rebuild the table
+	m.appendChild( tb ) ;
+}
+
+function open_options() {
+	var opt = document.getElementById( "option" ) ;
+	opt.onclick = function () {
+		this.title = ( this.title == "open" ) ? "close" : "open" ;
+		this.innerHTML = ( this.innerHTML == "[++] 游戏设置" ) ? "[--] 游戏设置" : "[++] 游戏设置" ;
+		for( var i=0; i<6; i++ ) {
+			var op = document.getElementById( "option" + i ) ;
+			op.style.visibility = ( op.style.visibility != "hidden" ) ? "hidden" : "visible" ;
+		}
+		return false ; // prevent href link
+	}
+}
+
+function set_options() {
+	var selector = document.getElementById( "difficulty" ) ;
+	var userLine = document.getElementById( "user_line" ) ;
+	var userRow = document.getElementById( "user_row" ) ;
+	var userMines = document.getElementById( "user_mines" ) ;
+	var submitSettings = document.getElementById( "submit_settings" ) ;
+	var opts = new Array( 3 ) ;
+	opts[0] = new Array( 9, 9, 10 ) ;
+	opts[1] = new Array( 16, 16, 40 ) ;
+	opts[2] = new Array( 16, 30, 99 ) ;
+	selector.onchange = function () {
+		switch( selector.selectedIndex ) {
+		case 0:
+		case 1:
+		case 2:
+			var uLv = opts[ selector.selectedIndex ][0] ;
+			var uRv = opts[ selector.selectedIndex ][1] ;
+			var uMv = opts[ selector.selectedIndex ][2] ;
+			userLine.value = uLv ;
+			userRow.value = uRv ;
+			userMines.value = uMv ;
+
+			userLine.disabled = true ;
+			userRow.disabled = true ;
+			userMines.disabled = true ;
+			submitSettings.disabled = true ;
+
+			document.getElementById( "show_errors" ).innerHTML = "&nbsp;" ;
+			set_map( uLv, uRv, uMv, false, false ) ;
+			new_game() ;
+			break ;
+		case 3:
+			userLine.disabled = false ;
+			userRow.disabled = false ;
+			userMines.disabled = false ;
+			submitSettings.disabled = false ;
+			break ;
+		}
+	}
+	submitSettings.onclick = function () {
+		var lv = parseInt( userLine.value, 10 ) ;
+		var rv = parseInt( userRow.value, 10 ) ;
+		var mv = parseInt( userMines.value, 10 ) ;
+		var errMsg = "" ;
+		if( !isNaN(lv) && !isNaN(rv) && !isNaN(mv) ) {
+			var i=0 ;
+			if( lv<9 || lv>24 )
+				errMsg += "Warnings: <br /" + ">" + (++i) + ". 行数应该在 9和24 之间!" ;
+			if( rv<9 || rv>30 )
+				errMsg += "<br /" + ">" + (++i) + ". 列数应该在 9和30 之间!" ;
+			if( mv<10 || mv>lv*rv*9/10 )
+				errMsg += "<br /" + ">" + (++i) + ". 地雷数应该在 10和" + Math.floor(lv*rv*9/10) + " 之间!" ;
+			if( errMsg == "" ) {
+				document.getElementById( "show_errors" ).innerHTML = "&nbsp;" ;
+				set_map( lv, rv, mv, false, false ) ;
+				new_game() ;
+				alert( "已成功设置游戏!" ) ;
+				
+				document.getElementById( "option" ).innerHTML = "[++] 游戏设置" ;
+				for( var i=0; i<6; i++ ) {
+					var op = document.getElementById( "option" + i ) ;
+					op.style.visibility = "hidden" ;
+				}
+				return ;
+			}
+		}
+		else
+			errMsg += "Errors: <br /" + ">请输入数字字符(0-9)!" ;
+		document.getElementById( "show_errors" ).innerHTML = errMsg ;
+	}
+}
+
+function restart_game() {
+	gameOver = false ;
+	havePlayed = false ;
+	timeCounter.value = "0000" ;
+	for( var i=0; i<count; i++ ) {
+		var square = document.getElementById( i ) ;
+		square.clicked = false ;
+		square.locked = false ;
+		square.innerHTML = "&nbsp;" ;
+		square.style.border = "lightgreen 1px outset" ;
+		square.style.backgroundColor = "#dddd77" ;
+	}
+}
+
+function new_game() {
+	if( setTimeoutId != undefined && setTimeoutId != "have cleared" ) {
+		clearTimeout( setTimeoutId ) ;
+		setTimeoutId = "have cleared" ;
+	}
+	rebuild_table() ;
+	create_mine_map() ;
+	init_map() ;
+	build_map() ;
+	replay() ;
+}
+
+function replay() {
+	document.getElementById( "play" ).onclick = function () {
+		if( havePlayed == true && gameOver == false ) {
+			if( !confirm( "你正在玩当前的地图，请问是否想放弃当前地图而进行另外的一局?" ) )
+				return ;
+		}
+		set_map( line, row, mineCount, false, false ) ;
+		new_game() ;
+	}
+}
+function start_game() {
+	set_map( 16, 16, 40, false, false ) ; // set game map
+	rebuild_table() ;
+	create_mine_map() ;
+	init_map() ;
+	build_map() ;
+	replay() ;
+	open_options() ;
+	set_options() ;
+}
+
+function time_caculate() {
+	timeCounter = document.getElementById( "timecounter" ) ;
+	time_counter() ;
+}
+function time_counter() {
+	timeCounter.value = parseInt( timeCounter.value, 10 ) + 1 ;
+	if( timeCounter.value > 99 )
+		timeCounter.value = "0" + timeCounter.value ;
+	else if( timeCounter.value > 9 )
+		timeCounter.value = "00" + timeCounter.value ;
+	else
+		timeCounter.value = "000" + timeCounter.value ;
+	setTimeoutId = setTimeout( "time_counter()", 1000 ) ;
+}
+
+window.onload = start_game ;
+document.ondblclick = function () { return false; }
+// -->
+</script>
+</head>
+<body bgcolor="#eaf3da">
+<p style="color:#333333;"><span style="font:20px bold; color:blue;">扫雷</span> --- designed by <span style="font-style:italic; color:orange;">Wind Fantasy</span>, 希望你喜欢! 请最大化IE或Firefox浏览器窗口玩以获得最佳效果.</p>
+<table cellspacing="2" align="left" width="220">
+	<tr>
+		<th colspan="2"><a id="option" href="#" title="close">[--] 游戏设置</a></th>
+	</tr>
+	<tr id="option0" class="hide">
+		<td align="right">
+			难度选择：
+		</td>
+		<td>
+			<select id="difficulty">
+				<option value="easy">容易</option>
+				<option value="normal" selected="selected">一般</option>
+				<option value="hard" >较难</option>
+				<option value="usrdef">自定义</option>
+			</select>
+		</td>
+	</tr>
+	<tr id="option1" class="hide">
+		<td align="right">行数(9-24):</td>
+		<td><input id="user_line" type="text" size="4" maxlength="2" value="16" disabled="disabled" /></td>
+	</tr>
+	<tr id="option2" class="hide">
+		<td align="right">列数(9-30):</td>
+		<td><input id="user_row" type="text" size="4" maxlength="2" value="16" disabled="disabled" /></td>
+	</tr>
+	<tr id="option3" class="hide">
+		<td align="right">地雷数(10-648):</td>
+		<td><input id="user_mines" type="text" size="4" maxlength="3" value="40" disabled="disabled" /></td>
+	</tr>
+	<tr id="option4" class="hide">
+		<td colspan="2" align="center"><input id="submit_settings" type="button" value="提交设置" disabled="disabled" /></td>
+	</tr>
+	<tr id="option5" class="hide">
+		<td colspan="2" style="color:red; font-size:14px;" id="show_errors">&nbsp;</td>
+	</tr>
+</table>
+<div id="mine">
+</div>
+</body>
+</html>

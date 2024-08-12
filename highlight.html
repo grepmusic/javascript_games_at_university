@@ -1,0 +1,482 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Highlight Code Version 2.0(2011-10-20)</title>
+    <style type="text/css">
+      * { padding: 0; margin: 0; }
+      #main { width: 800px; margin: auto; }
+      #code { font-size: 0.8em; padding: 0.2em 0; }
+      #codesettings { border: 1px dotted #888; margin: 0.4em 0; padding: 0.1em 0; }
+      #codesettings label { display: block; text-indent: 0.2em; }
+      #codesettings input { width: 2em; }
+      #settingstitle { font-size: 1.1em; font-weight: bold; }
+      #code textarea { width: 100%; height: 200px; }
+      #presentation { line-height: 1.2em; font-size: 0.8em; font-family:monospace; width: 800px; } /* fix IE6, making lineno and code of the same height */
+      #lineno { float: left; width: 60px; text-align: right; color: #990033; background-color: #cccccc; }
+      #highlightcode { float: left; width: 734px; margin-left: 6px; white-space: nowrap; overflow-x: auto; }
+
+      /* custom code style class defined here */
+      /* add each language style className with the RELATED option value as prefix in [Select a Programing Language] select list */
+
+      /* for C/C++ */
+      .cppstring { color:#ff0000; }
+      .cppcomment { color:#008800; }
+      .cppcharacter { color:#ff00cc; }
+      .cpppreprocessor { color:#006666; }
+      .cppidentifier { color:#0000ff; }
+      .cppkeyword { color:#ff3300; font-weight:bold; }
+      .cppnumber { color:#990099; }
+      .cppoperator { color:#000066; }
+      .cppuserhighlight { color:#0099ff; }
+
+      /* for JavaScript */
+      .jsstring_dq { color:#ff0000; }
+      .jscomment { color:#008800; }
+      .jsstring_sq { color:#ff00cc; }
+      .jsidentifier { color:#0000ff; }
+      .jskeyword { color:#ff3300; font-weight:bold; }
+      .jsnumber { color:#990099; }
+      .jsoperator { color:#000066; }
+      .jsuserhighlight { color:#0099ff; }
+      .jsregexp { color: #fe5677; }
+      .jsloprand { color: #000000; }
+
+      /* TODO: other language css style adds here */
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <br />
+      <div style="font-size:0.9em;"><strong><em>A simple highlight (JavaScript/C/C++) code parser based on regular expression, works fine with IE6 and the latest FF/Chrome/Opera(<span style="color:green; font-size:0.9em;">have a small align bug in Safari between lineno and highlight code</span>), hope you can enjoy, designed by Wind Fantasy &copy; 2011-10-20</em></strong></div>
+      <div style="overflow-x: hidden;"> ----------------------------------------------------------------------------------------------------------------------------- </div>
+      <div style="color: #008800; font-size: 0.8em;">Version 2.0: Now I have partly fixed the <em>JavaScript Highlight bug</em> by supposing that '/' stands for division only if '/' follows <strong style="color: #ff0000;">({number}|{identifier}|[\)\]}])[ \t]*</strong> directly, as we know that '/' needs a left operand for division</div>
+      <div style="font-size: 0.8em;">Please visit <a href="http://www.benjoffe.com/code/projects/syntax/" target="_blank">JavaScript Syntax Highlighter</a> for more information about JavaScript Highlight.</div>
+      <br />
+      <div id="code">
+        <div id="action">
+          <button id="hidecodesettings" type="button">Hide Code Settings</button>
+          &nbsp;<button id="highlight" type="button">Highlight Textarea Code</button>
+          &nbsp;<button id="testjsself" type="button">Highlight JavaScript Of Current Document</button>
+        </div>
+        <form autocomplete="off">
+          <div id="codesettings">
+            <div id="settingstitle">Code Settings</div>
+            <label>Select a Programing Language:
+              <select id="language">
+                <option value="cpp">C/C++</option>
+                <option value="js">JavaScript</option>
+              </select>
+            </label>
+            <label>Select Formatting Method:
+              <select id="formattingmethod">
+                <option value="pre">Use Pre Tag (Fast)</option>
+                <option value="entity">Use HTML Entity (Slow)</option>
+              </select>
+            </label>
+            <label><em>(Depreciated)</em> Highlight With Line Number:
+              <input type="checkbox" checked="checked" id="withlineno" disabled="disabled" />
+            </label>
+            <label><em>(Depreciated)</em> Tab Width(works only when <strong>[Select Formatting Method] &gt; Use HTML Entity</strong> is Selected):
+              <input type="text" id="tabwidth" value="4" maxlength="1" />
+            </label>
+            <!--
+            <label>Line Number Min Width(works only when <strong>[Highlight With Line Number]</strong> is Checked):
+              <input type="text" id="linenominwidth" value="4" />
+            </label>
+            -->
+            <label>
+              <button id="submitcodesettings" type="button">Save Code Settings &amp; Restart to Hightlight</button>
+            </label>
+          </div>
+          <div style="padding: 3px;">Time used: <span id="time" style="color: #FF0000;">0.000</span> s <span style="color: #008800;">(I think the latest Google browser is the fastest)</span></div>
+          <div id="codetext">
+            <textarea id="sourcecode">
+// input some codes here to test, please help yourself
+#include<cstdio> // work as well
+#include <iostream>
+#include <string>
+using namespace std;
+
+/*
+  swap int x and int y quickly with ^
+  we expect x, y is an int variable, must NOT be (const) expression
+  such as swap(1,y) OR swap(a+b, c), the same as swap_slow
+*/
+#define swap(x,y) \
+x ^= y; \
+y ^= x; \
+x ^= y;
+
+/*
+  swap int x and int slowly with temp
+*/
+#define swap_slow(x,y) \
+int temp = x; \
+y = x; \
+x = temp;
+
+int main() {
+
+  string s = "uvwxyz"; // nomal C++ string
+  
+  /**
+    line-continuing string
+  */
+  char[] lcs = "ABC\x44D\
+EF\
+G\
+";
+
+  /**
+    special line-continuing string
+  */
+  char[] slcs = "abc\\\"\\\
+continue\
+end";
+
+
+  /**
+    invalid line-continuing string 1
+    no line-continuing character (pattern) /\\(?:\r?\n)/ to be found
+  */
+  char[] ilcs1 = "abc\\\"\\
+invalidremain\
+invalidend";
+
+  /**
+    invalid line-continuing string 2
+  */
+  char[] ilcs2 = "abc\"\
+def\
+badend // no quote enclosed to be found
+
+  char c = '\x41'; // character 'A'
+  
+  // line-continuing character
+  char lcc = '\
+  \
+  \x\
+  42'; // character 'B'
+  
+  // no enclose double quote " string
+  char* partly_s = "abcdefg
+  // no enclose single quote ' character
+  char partly_c = 'z
+  
+  float f = 1.2f;
+  double d = 3.// 3.0
+  double d2 = .3// 0.3
+  double e = .1234e-3L; // long double
+  unsigned int ui = 5678u;
+  long int li = 9l; // not 91
+  int i = 100;
+  double cast = 12345678f; // int to float, float to double
+  long int lhex = 0x12aBL;
+  unsigned int uhex = 0XFf23u;
+  int hex = 0xcD89;
+  int invalid = 0xZ123; // invalid hex number
+
+  cout << s << endl;
+
+  return 0;
+}
+            </textarea>
+          </div>
+        </form>
+      </div>
+      <div id="presentation">
+        <div id="lineno"></div>
+        <div id="highlightcode"></div>
+      </div>
+    </div>
+    <script id="jsself" type="text/javascript">
+      // new bugs: (These are even difficult to be fixed because we need further analysising.)
+      var hacknum = 0;
+      {} /re/.test('re'); // {} becomes an empty statement so that /re/ should be highlighted as a R.E.
+      hacknum++ / 1 / 2; // division not R.E
+      /[/]/.test('/'); // non-escaped '/' in a character set of R.E. is interpreted as the end of R.E. unfortunately
+      hacknum = 1
+      / // single-line comment does NOT work
+      0.5 
+     / 2; // the first '/' is NOT a delimiter of R.E. as you know that hacknum is 1 later;
+      var hacknull = null / 2; // division not R.E.
+      
+      // !spam, partly fixed Version 1.0. Oh, JavaScript is NOT that easy!
+      // the big problem in Highlight JavaScript Code:
+      // code below is test for hacking, division symbol '/' is treated as a delimiter of the beginning of regular expression
+      // so far I have NOT (found) any way based on regular expression determining whether '/' stands for division(operator) or not(that is, for delimiter)
+      // sometimes we need Syntax Analysis, or even Semantic Analysis
+      // be careful with the code (being or like) below, which will cause confusing representation of the code according to its real meaning
+      // if we don't analysis R.E.(short for regular expression), quote(s) in R.E. will cause error when try to highlight/analysis quoted string
+      // else(that is we analysis R.E.) we don't know whether '/' stands for division(operator) or not
+      // [1]. I have NOT fixed part R.E.(fixed string as you can test, that is, a string defined like 'var s="abc', no enclose ", will be highlighted as string)
+      // [2]. I always suppose that your js code is clean and well-orgnized and you hardly use '/' as division twice or more OR mixed R.E. and division in the same line
+      // [3]. I always suppose your js code to be block not inline, you know(that is, multiline, so that an error ruins at most ONE line)
+      // [4]. The most important is that I suppose you DO according to the three rules above
+      var hacknum = 1/2, hackre = /"test/, hackcomment = "abc"; // this SHOULD have been single-line comment, but it is NOT as you see
+      // spam!
+      
+      var HighlightParser =(function () {
+        // if you want to use jQuery $, please define a variable alias of $ by assignment, for example: var alias_$ = $, OR use jQuery itself
+        var $ = { // create a container so that we can access the previous attributes or methods next step by $.attributename or $.methodname
+          'library': {
+            // PHP-Partly-Compatible htmlspecialchars and htmlspecialchars_decode
+            'htmlspecialchars': function (str, encode_sq) { // make html special chars their entities, bool encode_sq means whether we wanna convert single quote to its entity
+              var ent = { '>': '&gt;', '<': '&lt;', '&': '&amp;', '"': '&quot;' };
+              ent["'"] = encode_sq ? '&#039;' : "'";
+              return str.replace(/[\<\>&"']/g, function () { return ent[arguments[0]]; } );
+            },
+            'htmlspecialchars_decode': function (str, decode_sq) { // decode of htmlspecialchars
+              var ent_r = { '&gt;': '>', '&lt;': '<', '&amp;': '&', '&quot;': '"'};
+              ent_r['&#039;'] = decode_sq ? "'" : '&#039;';
+              return str.replace(/&(?:gt|lt|quot|#039|amp);/g, function () { return ent_r[arguments[0]]; });
+            },
+            /*
+            'htmlspace': function (str) {
+              var ent = { '\n': '<br \/>', '\r\n': '<br \/>', '\t': $.config.tabreplacement };
+              //alert('sp:' + str + '*')
+              return str.replace(/\r?\n|\t|(\s)/g, function () { var $ = arguments; /*alert('1' + $[1] + '1'); if(! prompt('', false)) throw 'hi';* / return $[1] ? '&nbsp;' : ent[$[0]]; });
+            },
+             */
+            'htmlspace': function (str) { // make html spaces(\t \n) its real representation in text mode
+              var ent = { '\t': $.config.tabreplacement, ' ': '&nbsp;'}
+              return str.replace(/[\t ]/g, function () { return ent[arguments[0]]; });
+            },
+            'htmlbreakline': function (str, tagname) { // make html break-line character its real representation in text mode
+              if (! tagname) { // tagname means using tagname instead of tag br to render representation, possiablely use div, but div is block default while span is inline(this will cause problem)
+                return str.replace(/\r?\n/g, '<br \/>\r\n');
+              }
+              var bothtag = [ ['<', '>'].join(tagname), ['</', '>'].join(tagname)];
+              // return str.replace(/^.*$/mg, function () { return bothtag.join(arguments[0]); });
+              return str.replace(/(?:^|\r?\n)([^\r\n]*)/g, function () { 
+                var $1 = String(arguments[1]);
+                //alert($1 + '*' + $1.charCodeAt(0) + '.' + $1.charCodeAt(1));
+                //alert(bothtag.join(arguments[1] || 'nbsp;'))
+                return bothtag.join(arguments[1] || '&nbsp;'); });
+            },
+            'htmlpre': function (str, encode_sq) { // make representation of str in html mode the same as pre mode
+              //alert('pre:' + str + '*')
+              return $.library.htmlspace( $.library.htmlspecialchars(str, encode_sq) );
+            },
+            'objecttoarray': function (obj, includeprototype) { // reuturn an array of each propery VALUE of obj
+              var a = [];
+              for (var prop in obj) {
+                if (includeprototype || obj.hasOwnProperty(prop))
+                  a.push(obj[prop]);
+              }
+              return a;
+            },
+            'propertytoarray': function (obj, includeprototype) { // return an array of each propery NAME of obj
+              var a = [];
+              for (var prop in obj) {
+                if (includeprototype || obj.hasOwnProperty(prop))
+                  a.push(prop);
+              }
+              return a;
+            },
+            'repeat': function (repeat, times) { // return a string when variable "repeat" repeats "times" times
+              return new Array(times + 1).join(repeat);
+            }
+          },
+          'config': {
+            'language': 'js', // [current/selected] programing language in ['cpp', 'js', ... etc.]
+            'formattingmethod': 0 ? 'pre' : 'entity', // formatingmethod in ['pre', 'entity'] for [pre tag method(Fast), HTML entity method(Slow)]
+            'withlineno': false, // highlight with line number
+            'tabwidth': 4, // works only when formattingmethod is 'entity'
+            //'linenominwidth': 4, // works only when withlineno is true
+            'tabreplacement': new Array(4 + 1).join('&nbsp;'), // but $.library.repeat('&nbsp;', $.config.tabwidth) doesn't work // replacement for tab
+            'updateTabwidth': function (tabwidth) {
+              $.config.tabwidth = tabwidth;
+              $.config.tabreplacement = new Array(tabwidth + 1).join('&nbsp;');
+            }
+          },
+          'regexp': { // core regular expressions for parser
+            'cpp': {
+              // both of 'string'(comment and uncomment) regexp below take the same effect 
+              //'string': '"(?:\\\\(?:\\\\|"|\\r?\\n)|[^"\\n])*"?', // first is ", /"(?:\\(?:\\|"|\r?\n)|[^"\n])*"?/
+              'string': '"(?:\\\\(?:\\r?\\n|.)|[^"\\n\\\\])*"?', // first is ", /"(?:\\(?:.|\r?\n)|[^"\n\\])*"?/
+              'character': "'(?:\\\\(?:\\\\|'|\\r?\\n)|[^'\\n])*'?", // first is ', /'(?:\\(?:\\|'|\r?\n)|[^\n])*'?/
+              'preprocessor': '(?:^|\\r?\\n)[^\\S\\n]*#[^\\S\\n]*[a-zA-Z]+', // first is #, /(?:^|\r?\n)[^\S\n]*#[^\S\n]*[a-zA-Z]+/
+              'keyword': '(?:asm|auto|bad_cast|bad_typeid|bool|break|case|catch|char|class|const|const_cast|continue|default|delete|do|double|dynamic_cast|else|enum|except|explicit|extern|false|finally|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|operator|private|protected|public|register|reinterpret_cast|return|short|signed|sizeof|static|static_cast|struct|switch|template|this|throw|true|try|type_info|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while)(?=\\W|$)',
+              'userhighlight': '(?:assert|cout|cin|endl|std|string)(?=\\W|$)',
+              'identifier': '[^\\W\\d]\\w*', // first is [^\W\d], /[^\W\d]\w*/
+              //'number': '(?:0[xX][\\da-fA-F]+|\\d+)(?:[Ll]?[Uu]?|[Uu]?[Ll]?)|(?:\\d+\\.?\\d*|\\d*\\.?\\d+)(?:[Ee][+-]?\\d+)?[LlFf]?', // first is [\d\.], /(?:0[xX][\da-fA-F]+|\d+)(?:[Ll]?[Uu]?|[Uu]?[Ll]?)|(?:\d+\.?\d*|\d*\.?\d+)(?:[Ee][+-]?\d+)?[LlFf]?/
+              'number': '0[xX][\\da-fA-F]+(?:[Ll]?[Uu]?|[Uu]?[Ll]?)|\\d+(?:[Ll][Uu]?|[Uu][Ll]?)|(?:\\d+\\.?\\d*|\\d*\\.?\\d+)(?:[Ee][+-]?\\d+)?[LlFf]?', // first is [\d\.], /0[xX][\da-fA-F]+(?:[Ll]?[Uu]?|[Uu]?[Ll]?)|\d+(?:[Ll][Uu]?|[Uu][Ll]?)|(?:\d+\.?\d*|\d*\.?\d+)(?:[Ee][+-]?\d+)?[LlFf]?/
+              //'comment': '//.*|/\\*(?:[^*]|\\*[^\\/])*(?:\\*/)?', // first is /, expect * or / to be followed, /\/\/.*|\/\*(?:[^*]|\*[^\/])*(?:*/)?/
+              'comment': '//.*|/\\*(?:[^*]|\\*(?!\\/))*(?:\\*/)?', // first is /, expect * or / to be followed, /\/\/.*|\/\*(?:[^*]|\*(?!\/))*(?:\*\/)?/
+              'operator': '(?:[-!+*/%&^|=><]|>>|<<)=?|[?:]', // /(?:[-!+*/%&^|=><]|>>|<<)=?|[?:]/
+              'space': '[^\\S\\n]+' // first is [^\\S\\n], /[^\\S\\n]+/
+            },
+            'js': {
+              'string_dq': '"(?:\\\\(?:\\\\|"|\\r?\\n)|[^"\\n])*"?', // first is ", /"(?:\\(?:\\|"|\r?\n)|[^"\n])*"?/, $1
+              'string_sq': "'(?:\\\\(?:\\\\|'|\\r?\\n)|[^'\\n])*'?", // first is ', /'(?:\\(?:\\|'|\r?\n)|[^\n])*'?/, $2
+              'keyword': '(?:abstract|boolean|byte|char|class|const|debugger|double|enum|export|extends|final|float|goto|implements|import|int|interface|long|native|package|private|protected|public|short|static|super|synchronized|throws|transient|volatile|break|case|continue|default|do|else|false|function|if|in|instanceof|null|new|return|switch|this|true|typeof|undefined|var|void|while)(?=\\W|$)',
+              'userhighlight': '(?:Array|Bool|Date|Function|Global|Math|NaN|Number|Object|RegExp|String|apply|call|constructor|document|window)(?=\\W|$)',
+              'identifier': '[$_a-zA-Z][\\w\\$]*', // first is [$_a-zA-Z], /[$_a-zA-Z][\w\$]*/, $5
+              'number': '0[xX][\\da-fA-F]+|(?:\\d+\\.?\\d*|\\d*\\.?\\d+)(?:[Ee][+-]?\\d+)?', // first is [\d.], /0[xX][\da-fA-F]+|(?:\d+\.?\d*|\d*\.?\d+)(?:[Ee][+-]?\d+)?/, $6
+              //'comment': '//.*|/\\*(?:[^*]|\\*[^\\/])*(?:\\*/)?', // first is /, expect * or / to be followed, /\/\/.*|\/\*(?:[^*]|\*[^\/])*(?:*/)?/
+              'comment': '//.*|/\\*(?:[^*]|\\*(?!\\/))*(?:\\*/)?', // first is /, expect * or / to be followed, /\/\/.*|\/\*(?:[^*]|\*(?!\/))*(?:\*\/)?/
+              //'loprand': '\\)\\s*/(?![*/])', // first is ), /\)\s*\/(?![*\/])/
+              'loprand': '(?:[\\])]\\s*|\\}[ \\t]*)/(?![*/])', // first is )]}, /(?:[\])]\s*|\}[ \t]*)\/(?![*\/])/
+              //'regexp': '/(?:\\\\/|[^/\\n])*/?[gmi]*', // first is /, /\/(?:[^\/\n]|\\\/)+)\//[gmi]*
+              //'regexp': '/(?:\\\\[/\\\\]|[^/\\n])+/[gmi]*[^\\S\\n]*', // first is /, /\/(?:\\[\/\\]|[^\/\n])+\/[gmi]*[^\S\n]*(?![\w])/
+              //'regexp': '/(?:\\\\[\\/\\\\]|[^/\\n\\\\])+/[gmi]*', // first is /, /\/(?:\\[\/\\]|[^/\n\\])+\/[gmi]*/
+              'regexp': '/(?:\\\\.|[^\\\\\\n/])+/[gmi]*', // first is /, /\/(?:\\.|[^\\\n\/])+\/[gmi]*/, $9
+              'operator': '(?:[-!+*/%&^|=><]|>>|<<)=?|=|[?:]', // /(?:[-!+*/%&^|=><]|>>|<<)=?|[?:]/
+              'space': '\\s+' // first is \s, /\s+/
+            },
+            'html': { // to be implemented
+              'tag': '<([a-zA-Z])(\\s>)*>.' // /<([a-zA-Z]+)((?:\s+[-\w]+=(?:'[^']*'|"[^"]*"))*)\s*>(.*)(?:<\/\1>)?/
+            }
+          },
+          'getCompiledPattern': function(language) {
+            var pattern = '(' + $.library.objecttoarray($.regexp[language]).join(')|(') + ')';
+            return new RegExp(pattern, "g");
+          },
+          'getCurrentPattern': function () {
+            return $.getCompiledPattern($.config.language);
+          },
+          'parse': function (sourcecode) {
+            // first we convert windows break line "\r\n" to unix/linux "\n" to fix opera/safari bug
+            sourcecode = sourcecode.replace(/\r(?=\n)/g, ''); // fix opera/safari(Opera/Safari will treat '\r' as the same representation of '\n')
+            var language = $.config.language, classNames = $.library.propertytoarray($.regexp[language]);
+            var premethod = ($.config.formattingmethod == 'pre');
+            var htmlformater = premethod ? $.library.htmlspecialchars 
+                                : function (str, encode_sq) { return $.library.htmlspace($.library.htmlspecialchars(str, encode_sq));};
+
+            if (language == 'js') {
+              var pattern = new RegExp( '(' + $.library.objecttoarray($.regexp[language]).join(')|(') + ')' );
+              var isdivision = false, s = [], turnback;
+              var divisionflag = [null, true, true, false, false, true, true]; // only 1, 2, 5, 6 subpattern can be placed before division
+              var next = sourcecode, matches, i, len, highlightcode, htmlspace = function (str) { return premethod ? str : $.library.htmlspace(str); };
+              
+              while ( (matches = pattern.exec(next)) != null) {
+                for (i = 1, len = matches.length; i < len; ++i) {
+                  if (matches[i]) {
+                    if (i == 9 && isdivision && matches.index == 0) { // when try to match regexp, but '/' turns out to be division, sorry we should turn back
+                      s.push([htmlformater(next.substr(0, matches.index), true), '<span class="jsoperator"\>/\<\/sapn\>'].join(''));
+                      turnback = true;
+                      next = next.substr(matches.index + 1);
+                    } else if (i == len - 1) { // spaces?
+                      s.push ( htmlformater(next.substr(0, matches.index + matches[i].length), true) );
+                    } else if (i == 8) { // loperand before '/'? i.e. '(function () { return 1; })()  / 2', matches[0] is ')  /'
+                      s.push ( [htmlformater(next.substr(0, matches.index), true), '<span class="js', classNames[i-1], '"\>', htmlspace(matches[i]).replace('/', '\<span class="jsoperator"\>/\<\/sapn\>'), '\<\/span\>'].join('') );
+                    } else {
+                      s.push ( [htmlformater(next.substr(0, matches.index), true), '<span class="js', classNames[i-1], '"\>', htmlformater(matches[i], true), '\<\/span\>'].join('') );
+                    }
+                    if (i == len - 1) {
+                      isdivision = (matches.index == 0 && matches[0].indexOf('\n') == -1) ? isdivision : false;
+                    } else {
+                      isdivision = Boolean(divisionflag[i]);
+                    }
+                    break;
+                  }
+                }
+                if (! turnback) {
+                  next = next.substr(matches.index + matches[0].length);
+                } else {
+                  turnback = false;
+                }
+              }
+              s.push(next);
+              highlightcode = s.join('');
+            } else {
+              var replace_callback = function () {
+                var matches = arguments;
+                var reallen = matches.length - 3; // strip last spaces, position where pattern starts to match and the original string to be replaced
+                for (var i=1; i < reallen; ++i) {
+                  if(matches[i]) {
+                     //alert(['*', matches[i], '*', matches[i].length, '*'].join(''));
+                    return ['<span class="', language, classNames[i-1], '">', htmlformater(matches[i], true), '<\/span\>'].join('');
+                    break;
+                  }
+                }
+                return htmlformater(matches[0], true);
+              }
+              highlightcode = sourcecode.replace($.getCurrentPattern(), replace_callback);
+            }
+            return premethod ? ['<pre>\r\n', '</pre>'].join(highlightcode) : $.library.htmlbreakline(highlightcode, false);
+          },
+          'getLineNoHTML': function (sourcecode) {
+            var linecount = sourcecode.split('\n').length, w = String(linecount).length;
+            var repeat = $.library.repeat, s, a = [];
+            for (var i=1; i <= linecount; ++i) {
+              s = String(i);
+              a.push( [repeat('0', w - s.length), s, '&nbsp;'].join('') ); // possiblely use &nbsp; instead of 0
+            }
+            if($.config.formattingmethod == 'pre') {
+              return ['<pre\>', a.join("\r\n"), '\r\n<\/pre>'].join('');
+            }
+            return a.join("\r\n<br \/>");
+          }
+        };
+        return $;
+      })();
+      function g(id) {
+        return document.getElementById(id);
+      }
+      window.onload = function () {
+        var elineno = g('lineno');
+        var ehighlightcode = g('highlightcode');
+        var esourcecode = g('sourcecode');
+        var elanguage = g('language');
+        var ewithlineno = g('withlineno');
+        var etabwidth = g('tabwidth');
+        var ecodesettings = g('codesettings');
+        var eformattingmethod = g('formattingmethod');
+        var time = g('time');
+        var cfg = HighlightParser.config;
+        
+        g('hidecodesettings').onclick = function () {
+          var style = ecodesettings.style;
+          if (style.display == 'none') {
+            style.display = 'block';
+            this.innerHTML = 'Hide Code Settings';
+          } else {
+            style.display = 'none';
+            this.innerHTML = "Display Code Settings";
+          }
+        }
+        var highlight = function () {
+          var t = new Date().getTime();
+          elineno.innerHTML = HighlightParser.getLineNoHTML(esourcecode.value);
+		  
+          ehighlightcode.innerHTML = HighlightParser.parse(esourcecode.value);
+          time.innerHTML = String( (new Date().getTime() - t) / 1000 );
+          if (window.ActiveXObject) { // fix ie6
+            ehighlightcode.style.height = elineno.clientHeight + 20 + 'px';
+          }
+        }
+        var reloadconfig = function () {
+          cfg.language = elanguage.value;
+          cfg.withlineno = ewithlineno.checked;
+          cfg.formattingmethod = eformattingmethod.value;
+          cfg.updateTabwidth(parseInt(etabwidth.value, 10));
+        }
+        g('submitcodesettings').onclick = function () {
+          reloadconfig();
+          highlight();
+        }
+        g('highlight').onclick = function () {
+          highlight();
+        }
+        g('testjsself').onclick = function () {
+          esourcecode.value = g('jsself').innerHTML;
+          /* There is a small difference(innerHTML of html script node) between w3c-compatible browser and IE6, here you can test
+          var v = esourcecode.value, a = [0, 1, 2, 3], s = [];
+          for (var i in a) {
+            s.push(v.charCodeAt(a[i]));
+          }
+          alert(s);
+          */
+          elanguage.selectedIndex = 1;
+          reloadconfig();
+          highlight();
+        }
+        reloadconfig();
+        highlight();
+      }
+    </script>
+  </body>
+</html>

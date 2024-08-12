@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Balls In One Line</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <!-- <script type="text/javascript" src="/excanvas.compiled.js"></script> -->
+        <style type="text/css" media="screen">
+            #canvas       { margin: auto; display: block; }
+        </style>
+    </head>
+    <body>
+        <div style="width: 90%; margin: auto;">
+            <canvas id="canvas" oncontextmenu="return false;" width="400" height="300"></canvas>
+            <div style="font-size: 11px; font-weight: bold; text-align: center;">
+                Select a ball by clicking on it and click on destination to move to, make the same color balls in one line to clear them to get score.
+<br />
+More details, see <a href="http://www.4399.com/flash/853.htm" target="_blank">4399 五子连珠</a>
+            </div>
+            <div style="font-size: 11px; text-align: center;">Hope you can enjoy, designed by Wind Fantasy &copy; 2012-08</div>
+        </div>
+        <script type="text/javascript">
+            // return a random number in [n1,n2) or [n2,n1)
+            function rand(n1, n2) {
+                var min, diff;
+                n2 = n2 || 0;
+                if(n1 == n2)
+                    return n1;
+                if(n1 <= n2)
+                    min = n1, diff = n2 - n1;
+                else
+                    min = n2, diff = n1 - n2;
+                return min + Math.floor(Math.random() * diff);
+            }
+            
+            function BallsInOneLine(canvas, cols, rows, R, options) {
+                var prop, defaultoptions, w, map, i;
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.cols = cols;
+                this.rows = rows;
+                this.R = R;
+                this.score = 0;
+                map = new Array(rows);
+                for (i=0; i < rows; ++i)
+                    map[i] = new Array(cols);
+                this.map = map;
+                this.current = null;
+                options = options || {};
+                defaultoptions = {
+                    theme: [
+                      [this.RandColor(), this.RandColor()],
+                      [this.RandColor(), this.RandColor()],
+                      [this.RandColor(), this.RandColor()],
+                      [this.RandColor(), this.RandColor()],
+                      [this.RandColor(), this.RandColor()]
+                    ],
+                    countoncefill: 5,
+                    mincountonceerase: 5,
+                    border: 1,
+                    padding: 2,
+                    scoreheight: 20
+                };
+                for (prop in defaultoptions) {
+                    if (defaultoptions.hasOwnProperty(prop)) {
+                        this[prop] = options[prop] || defaultoptions[prop];
+                    }
+                }
+                w = 2 * (this.padding + R);
+                canvas.width = cols * w + (cols - 1) * this.border;
+                canvas.height = this.scoreheight + rows * w + (rows - 1) * this.border;
+                this.baseX = this.baseY = this.padding + R;
+                this.deltaX = this.deltaY = R + this.padding + this.border + this.padding + R;
+                this.fillRect(0, 0, canvas.width, canvas.height, '#000');
+                this.updateScore();
+                this.next();
+                
+            }
+
+            BallsInOneLine.RandColor = BallsInOneLine.prototype.RandColor = function (a) {
+                var rand = Math.floor( (1 - Math.random()) * (/* max unsigned int */ -1 >>> 0) );
+                if(a != null)
+                    rand = (rand & ((-1 << 8) >>> 0)) | Math.round(a * 255);
+                return BallsInOneLine.GetColorFrom(rand);
+            }
+            BallsInOneLine.GetColorFrom = BallsInOneLine.prototype.GetColorFrom = function (intvalue) {
+                return 'rgba(' + [ (intvalue >>> 24) & 255, (intvalue >>> 16) & 255, 
+                                   (intvalue >>> 8) & 255,  ((intvalue & 255) / 255 + '').substr(0, 5)
+                                 ].join(',') + ')';
+            }
+            BallsInOneLine.prototype.fillRect = function (x, y, w, h, bgcolor) {
+                var ctx = this.ctx;
+                ctx.oldFillStyle = ctx.fillStyle;
+                ctx.clearRect(x, y, w, h);
+                ctx.fillStyle = bgcolor || '#000';
+                ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = ctx.oldFillStyle;
+            }
+            BallsInOneLine.prototype.clearBall = function (x, y, bgcolor) {
+                var R = this.R;
+                this.fillRect(x - R, y - R, R + R, R + R);
+            }
+            BallsInOneLine.prototype.drawBall = function (coordinate, innercolor, outtercolor, r, isnotcellcoordinate) {
+                var canvascoordinate = isnotcellcoordinate ? coordinate : this.getCanvasCoordinate(coordinate);
+                var x = canvascoordinate[1], y = canvascoordinate[0], R = this.R, ctx = this.ctx;
+                var color, rg;
+                r = r || 5;
+                if(! innercolor || ! outtercolor) {
+                    color = (this.map && this.map[coordinate[0]][coordinate[1]]);
+                    if(color) {
+                        innercolor = color[0];
+                        outtercolor = color[1];
+                    } else {
+                        innercolor = 'rgba(255,128,0,0.7)';
+                        outtercolor = 'rgba(128,128,0,0.9)';
+                    }
+                }
+                ctx.beginPath();
+                ctx.arc(x, y, R, 0, Math.PI*2, false);
+                ctx.closePath();
+                rg = ctx.createRadialGradient(x, y, r, x, y, R);
+                rg.addColorStop(0, innercolor);
+                rg.addColorStop(1, outtercolor);
+                ctx.oldFillStyle = ctx.fillStyle;
+                ctx.fillStyle=rg;
+                ctx.fill();
+                ctx.fillStyle = ctx.oldFillStyle;
+            }
+
+            BallsInOneLine.prototype.getEmptyBalls = function () {
+                var i, j, cols = this.cols, rows = this.rows, emptyballs = [], map = this.map;
+                for (i=0; i < rows; ++i)
+                    for(j=0; j < cols; ++j)
+                        if(! map[i][j])
+                            emptyballs.push([i, j]);
+                return emptyballs;
+            }
+            
+            BallsInOneLine.prototype.generateRandomBalls = function (countoncefill) {
+                var i, r, randomballs = [];
+                var emptyballs = this.getEmptyBalls(), undefined = void(0);
+                for(i=0; i < countoncefill; ++i) {
+                    r = rand(emptyballs.length);
+                    r = emptyballs.splice(r, 1)[0];
+                    if(r == undefined)
+                        break;
+                    randomballs.push(r);
+                }
+                return randomballs;
+            }
+            
+            BallsInOneLine.prototype.getCanvasCoordinate = function (coordinate) {
+                return [ this.scoreheight + this.baseY + (this.deltaY * coordinate[0]), this.baseX + (this.deltaX * coordinate[1]) ]
+            }
+        
+            BallsInOneLine.prototype.getCoordinate = function (canvascoordinate) {
+                var sh = this.scoreheight;
+                if(canvascoordinate[0] < sh) // click on header
+                  return true;
+                return [Math.floor((canvascoordinate[0] - sh) / this.deltaY), Math.floor(canvascoordinate[1] / this.deltaX)];
+            }
+            
+            BallsInOneLine.prototype.clearOneBall = function (coordinate, fillstyle) {
+                var R = this.R + 1, canvascoordinate = this.getCanvasCoordinate(coordinate);
+                this.fillRect(canvascoordinate[1] - R, canvascoordinate[0] - R, R + R, R + R, fillstyle);
+            }
+            
+            BallsInOneLine.prototype.next = function (countoncefill) {
+                var randomballs, i, coordinate, color, randomballscount, notover = true;
+                var theme = this.theme, themelength = theme.length, map = this.map;
+                countoncefill = countoncefill || this.countoncefill;
+                randomballs = this.generateRandomBalls(countoncefill);
+                randomballscount = randomballs.length;
+                for(i=0; i < randomballscount; ++i) {
+                    coordinate = randomballs[i];
+                    color = theme[rand(themelength)];
+                    map[coordinate[0]][coordinate[1]] = color;
+                    this.drawBall(coordinate, color[0], color[1]);
+                }
+                
+                notover = (this.clear(600) || this.getEmptyBalls().length > 0);
+                this.over = ! notover;
+                
+                return notover;
+            }
+            
+            BallsInOneLine.prototype.around = [
+                [-1, 0], // up
+                [0, +1], // right
+                [+1, 0], // down
+                [0, -1]  // left
+            ];
+            
+            BallsInOneLine.prototype.generateGraph = function () {
+                var map = this.map, cols = this.cols, rows = this.rows, graph = {}, i, j, x, y, center, adj;
+                var emptyballs = this.getEmptyBalls(), emptyballscount,
+                    around = this.around, aroundcount = around.length;
+                if(this.current)
+                    emptyballs.push(this.current);
+                emptyballscount = emptyballs.length;
+                for(i=0; i < emptyballscount; ++i) {
+                    adj = [];
+                    center = emptyballs[i];
+                    for(j=0; j < aroundcount; ++j) {
+                        x = center[1] + around[j][1];
+                        y = center[0] + around[j][0];
+                        if (map[y] && x >=0 && x < map[y].length && !map[y][x])
+                            adj.push(y + ',' + x);
+                    }
+                    graph[center] = adj;
+                }
+                return graph;
+            }
+            
+            BallsInOneLine.prototype.moveTo = function (to, step, speed) {
+                var from = this.current, map = this.map;
+                if (! from || map[to[0]][to[1]])
+                    return false;
+                var colorfrom = map[from[0]][from[1]];
+                clearTimeout(this.selectId);
+                this.clearOneBall(from);
+                this.drawBall(to, colorfrom[0], colorfrom[1]);
+                map[to[0]][to[1]] = colorfrom;
+                map[from[0]][from[1]] = void(0);
+                this.current = null;
+                this.select(to);
+                return true;
+            }
+            
+            BallsInOneLine.prototype.select = function (coordinate, speed) {
+                var ctx = this.ctx, R = this.R, balls = this, current = this.current;
+                var canvascoordinate, select, lg, x, y;
+                if (current) {
+                    if(this.selectId)
+                        clearTimeout(this.selectId);
+                    this.clearOneBall(current);
+                    this.drawBall(current);
+                    if (current[0] == coordinate[0] && current[1] == coordinate[1]) {
+                        this.current = null;
+                        return;
+                    }
+                }
+                canvascoordinate = this.getCanvasCoordinate(coordinate);
+                x = canvascoordinate[1];
+                y = canvascoordinate[0];
+                speed = speed || 1000;
+                var start = 0, n = 16, dashrad = Math.PI / n;
+                select = function () {
+                    var i, startrad;
+                    ctx.oldStrokeStyle = ctx.strokeStyle;
+                    for(i=0; i < n; ++i) {
+                        startrad = (start + i * 2) * dashrad;
+                        ctx.strokeStyle = BallsInOneLine.RandColor(1.0);
+                        ctx.beginPath();
+                        ctx.arc(x, y, R, startrad, startrad + dashrad, false);
+                        ctx.closePath();
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(x, y, R - 3, startrad, startrad + dashrad, false);
+                        ctx.closePath();
+                        ctx.stroke();
+                        ctx.strokeStyle='rgba(0,0,0,1.0)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, R, startrad + dashrad, startrad + dashrad + dashrad, false);
+                        ctx.closePath();
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(x, y, R - 3, startrad + dashrad, startrad + dashrad + dashrad, false);
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+                    ctx.strokeStyle = ctx.oldStrokeStyle;
+                    start = (start + 1) % n;
+                    balls.selectId = setTimeout(select, speed);
+                }
+                this.current = coordinate;
+                select();
+            }
+            
+            BallsInOneLine.prototype.getMinimumPathTo = function (to) {
+                var from = this.current;
+                if(! from || ! to)
+                    return null;
+                var graph = this.generateGraph(), src = from.join(','), dst = to.join(',');
+                var fromadjvertexes = graph[from], toadjvertexes = graph[to], visited = {},
+                    q = [src], p = [src], path = [], adj, v, i, len;
+
+                if(! fromadjvertexes || ! toadjvertexes)
+                    return null;
+outterloop:
+                while(q.length > 0) {
+                    v = q.shift();
+                    adj = graph[v];
+                    len = adj.length;
+                    for(i=0; i < len; ++i)
+                        if(! visited[adj[i]]) {
+                            visited[adj[i]] = true;
+                            q.push(adj[i]);
+                            p.push(adj[i]);
+                            if(adj[i] == dst)
+                                break outterloop;
+                        }
+                }
+        
+                if(i < len) {
+                    while(p.length > 0) {
+                        v = p.pop();
+                        path.unshift(v.split(',').map(Number));
+                        for(i = 0, len = p.length; i < len - 1; ++i) {
+                          if(graph[p[i]].indexOf(v) != -1) {
+                              p.splice(i + 1, len - (i + 1));
+                              break;
+                          }
+                        }
+                    }
+                    return path;
+                }
+                
+                return null;
+            }
+            
+            BallsInOneLine.prototype.goTo = function (to) {
+                var path = this.getMinimumPathTo(to);
+                path && this.emulate(path.slice(1));
+            }
+            
+            BallsInOneLine.prototype.emulate = function (path, interval) {
+                var thisobj = this, 
+                    len = path.length,
+                    i = 0,
+                    move = function (interval) {
+                        if(i < len)
+                            thisobj.moveTo(path[i]);
+                        else if(i >= len) {
+                            thisobj.moveInterval && clearInterval(thisobj.moveInterval);
+                            thisobj.moveInterval = null;
+                            thisobj.clear() || thisobj.next();
+                        }
+                        ++i;
+                    };
+                this.moveInterval = setInterval(move, 168);
+            }
+            
+            BallsInOneLine.prototype.clear = function (interval) {
+                var map = this.map, cols = this.cols, rows = this.rows, clears = [];
+                var i, j, k, end, startcolor, currentrow, currentcol, temp, starty, endy;
+                var mincount = this.mincountonceerase || (this.countoncefill + 1);
+                end = cols - mincount;
+                for (i=0; i < rows; ++i) {
+                    currentrow = map[i];
+                    for (j=0; j <= end; ++j) {
+                        startcolor = currentrow[j];
+                        if(startcolor) {
+                            k = 1;
+                            while(currentrow[j+k] === startcolor) {
+                                ++k;
+                            }
+                            if (k >= mincount) {
+                                clears = clears.concat(
+                                    currentrow.slice(j, j+k).map(
+                                        function (element, index) {
+                                            return [i, j + index];
+                                        }
+                                    )
+                                );
+                            }
+                            j += k - 1; // note: ++j makes j = j + k
+                        }
+                    }
+                }
+                
+                end = rows - mincount;
+                for (j=0; j < cols; ++j) {
+                    currentcol = map.map(
+                        function (element, index) {
+                            return element[j];
+                        }
+                    );
+                    for (i=0; i <= end; ++i) {
+                        startcolor = map[i][j];
+                        if(startcolor) {
+                            k = 1;
+                            while(currentcol[i+k] === startcolor) {
+                                ++k;
+                            }
+                            if (k >= mincount) {
+                                clears = clears.concat(
+                                    currentcol.slice(i, i+k).map(
+                                        function (element, index) {
+                                            return [i + index, j];
+                                        }
+                                    )
+                                );
+                            }
+                            i += k - 1; // note: ++i makes i = i + k;
+                        }
+                    }
+                }
+                
+                end = rows - mincount;
+                for(i=mincount - cols; i <= end; ++i) {
+                    starty =  i < 0 ? 0 : i;
+                    endy = (cols + i) >= rows ? (rows - 1) : (cols + i);
+                    for(j=starty; j <= endy; ++j) {
+                      startcolor = map[j][j - i];
+                      if(startcolor) {
+                            k = 1;
+                            temp = [ [j, j - i] ];
+                            while(map[j + k] && map[j + k][j - i + k] === startcolor) {
+                                temp.push([j + k, j - i + k]);
+                                ++k;
+                            }
+                            if (k >= mincount) {
+                                clears = clears.concat(temp);
+                            }
+                            j += k - 1; // note: ++j makes j = j + k;
+                        }
+                    }
+                }
+                
+                end = rows + cols - mincount;
+                for(i=0; i <= end; ++i) {
+                    starty =  i > cols ? i - cols : 0;
+                    endy = (i < rows) ? i : (rows - 1);
+                    for(j=starty; j <= endy; ++j) {
+                      startcolor = map[j][i - j];
+                      if(startcolor) {
+                            k = 1;
+                            temp = [ [j, i - j] ];
+                            while(map[j + k] && map[j + k][i - j - k] === startcolor) {
+                                temp.push([j + k, i - j - k]);
+                                ++k;
+                            }
+                            if (k >= mincount) {
+                                clears = clears.concat(temp);
+                            }
+                            j += k - 1; // note: ++j makes j = j + k;
+                        }
+                    }
+                }
+                
+                var clearslength = clears.length;
+                var thisobj = this;
+                interval = parseInt(interval);
+                var clear = function () {
+                    var i, ctx = thisobj.ctx;
+                    for(i=0; i < clearslength; ++i) {
+                        if(thisobj.current && clears[i][0] == thisobj.current[0] && clears[i][1] == thisobj.current[1]) {
+                            thisobj.selectId && (clearTimeout(thisobj.selectId), thisobj.selectId = null);
+                            thisobj.current = null;
+                        }
+                        thisobj.clearOneBall(clears[i]);
+                        thisobj.map[clears[i][0]][clears[i][1]] = undefined;
+                    }
+                    thisobj.score += clearslength;
+                    thisobj.updateScore();
+                };
+                interval ? setTimeout(clear, interval) : clear();
+                return clearslength > 0;
+            }
+            
+            BallsInOneLine.prototype.updateScore = function () {
+                var ctx = this.ctx;
+                this.fillRect(0, 0, this.canvas.width, this.scoreheight, 'rgba(0,0,0,0.8)');
+                ctx.textBaseline = 'top';
+                ctx.align = 'center';
+                ctx.oldFillStyle = ctx.fillStyle;
+                ctx.fillStyle = '#00ff00';
+                ctx.fillText('Score: ' + (this.score * 100) + '  cols*rows: ' + this.cols + '*' + this.rows + 
+                              '  oncefill: ' + this.countoncefill + ' onceerase: ' + this.mincountonceerase +
+                              '  colorcount: ' + this.theme.length + '    [ Click here for Settings ]', 4, 4);
+                ctx.fillStyle = ctx.oldFillStyle;
+            }
+            
+            BallsInOneLine.prototype.isLocked = function () {
+                return this.moveInterval != null;
+            }
+            
+            BallsInOneLine.prototype.destruct = function () {
+                this.fillRect(0, 0, this.canvas.width, this.canvas.height, '#000');
+                clearInterval(this.moveInterval);
+                clearTimeout(this.selectId);
+                for(var prop in this)
+                    delete this[prop];
+            }
+//          if(! Array.prototype.map) {
+//            Array.prototype.map = function (func, thisobj, changeself, extraargs) { // map this with thisobj.fuc
+//                var i = 0, len = this.length;
+//                if (! (extraargs instanceof Array)) {
+//                  extraargs = Array.prototype.slice.call(arguments, 3);
+//                }
+//                if (changeself) {
+//                  for (i=0; i < len; ++i) {
+//                    this[i] = func.apply(thisobj, [ this[i] ].concat(extraargs));
+//                  }
+//                } else {
+//                  for (i=0; i < len; ++i) {
+//                    func.apply(thisobj, [ this[i] ].concat(extraargs));
+//                  }
+//                }
+//                return this;
+//              }
+//          }
+          window.onload = function () {
+            var canvas = document.getElementById('canvas');
+            var b = window.b = new BallsInOneLine(canvas, 10, 10, 30, {countoncefill: 3});
+            b.canvas.onmousedown = function (e) {
+                var b = window.b;
+                var coordinate = b.getCoordinate([e.offsetY || e.clientY - this.offsetTop, e.offsetX || e.clientX - this.offsetLeft]);
+                var settings, matches;
+                if(coordinate) {
+                    if(coordinate === true) { // click on header
+                        settings = prompt('input cols*rows>=9 [R>=10 [fill>=2 [erase>=2 [color>=2]]]]\nfor example: 10*10 30 5 5 5', '');
+                        matches = /^\s*(\d+)\*(\d+)(?:\s+(\d+)(?:\s+(\d+)(?:\s+(\d+)(?:\s+(\d+))?)?)?)?\s*/.exec(settings);
+                        if(! matches)
+                            return;
+                        b.destruct();
+                        window.b = new BallsInOneLine(
+                              canvas,
+                              matches[1] < 3 ? 10 : Number(matches[1]),
+                              matches[2] < 3 ? 10 : Number(matches[2]),
+                              matches[3] >= 10 ? Number(matches[3]) : 30,
+                              {
+                                countoncefill: matches[4] >= 2 ? Number(matches[4]) : 3,
+                                mincountonceerase: matches[5] >= 2 ? Number(matches[5]) : 5,
+                                theme: new Array(matches[6] >= 2 ? Number(matches[6]) : 5).join(',').split(',').map(function (e, i) {
+                                    return [ BallsInOneLine.RandColor(), BallsInOneLine.RandColor() ];
+                                })
+                              }
+                          );
+                        return;
+                    }
+                    if(b.isLocked())
+                        return;
+                    if(b.over) {
+                        clearTimeout(b.selectId);
+                        alert('game over');
+                        return;
+                    }
+                    //console.log('click ' + coordinate);
+                    if(b.map[coordinate[0]][coordinate[1]]) {
+                        b.select(coordinate);
+                        //console.log('select/unselect ' + coordinate);
+                    } else {
+                        b.goTo(coordinate);
+                        //console.log('goto ' + coordinate);
+                    }
+                }
+            }
+        }
+        </script>
+    </body>
+</html>

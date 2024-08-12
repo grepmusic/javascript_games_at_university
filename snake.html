@@ -1,0 +1,295 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=gbk" />
+<title>Snake</title>
+<style type="text/css">
+<!--
+#prompt {
+	margin: auto;
+	width: 402px;
+	font-size: 12px;
+	color: green;
+	background-color: pink;
+}
+#prompt input {
+	font-size: 12px;
+	background-color: #555555;
+	cursor: pointer;
+	color: orange;
+}
+#snake {
+	border: 1px solid orange;
+	margin: auto;
+	position: relative;
+	width: 400px;
+	height: 300px;
+}
+#snake span {
+	float: left;
+	width: 8px;
+	height: 8px;
+	line-height: 8px; /* fix ie6 */
+	border: 1px solid #feffef;
+	background-color: #ffeeff;
+}
+#score {
+	color: blue;
+	float: right;
+}
+#state {
+	color: red;
+}
+#config {
+	width: 402px;
+	font-size: 12px;
+	background-color: lightblue;
+	margin: auto;
+}
+-->
+</style>
+<script type="text/javascript">
+<!--
+function $( id ) { // simplfied function document.getElmentById(string id)
+	return document.getElementById( id );
+}
+function change(id_suffix, color) {
+	$("s" + id_suffix).style.backgroundColor = color;
+}
+function get_random( maxnumber ) { // get a random number in [0, maxnumber)
+	return Math.floor( maxnumber*Math.random() );
+}
+
+// the snake's head's, body's, next point's, and other points' color
+var headcolor="blue", bodycolor="green", nextcolor="red", bgcolor="#ffeeff";
+// the snake's height, width, body, the flag if the snake can go through the wall, the next point's position
+var line, row, snakebody, iscycled, nextpoint;
+// the snake's moving speed, interval ID, direction, the flag if game is over, the flag if game is paused
+var speed=500, ID=null, direction=100, gameover=false, ispaused=false, called=false;
+
+function initialize_snake (l, r, ic) { // initialize the game before the game starts
+	if (arguments.length == 3) {
+		line = l;
+		row = r;
+		iscycled = ic;
+	}
+	snakebody = new Array(1); // the whole snake body
+	snakebody[0] = 0; // the head(snakebody[snakebody.length-1]) of snake is initialized to [0,0]
+	nextpoint = get_random(line*row-1)+1; // assign the next point's position a random position(different from head[0,0])
+}
+
+function create_map() {
+	var s = "", i, j;
+	for (i=0; i < line; i++) {
+		s += "<div>";
+		for (j=0; j < row; j++) {
+			if (i == 0 && j == 0) {
+				s += '<span style="background-color:blue;" id="s' + (row*i + j) + '"><\/span>';
+			} else {
+				s += '<span id="s' + (row*i + j) + '">&nbsp;<\/span>';
+			}
+		}
+		s += "<\/div>";
+	}
+	$("snake").innerHTML = s;
+	$("s" + nextpoint).style.backgroundColor = nextcolor;
+}
+
+function clear_interval() {
+	if (ID) {
+		clearInterval(ID);
+		ID = null;
+	}
+}
+
+function game_over () {
+	gameover = true;
+	clear_interval();
+	alert("对不起,游戏结束.\r\n你的得分是: " + (snakebody.length-1) + ".");
+	$("state").innerHTML = "已结束!";
+}
+
+function handle_press (key) {
+	if (gameover) {
+		clear_interval();
+		return;
+	}
+	var L = snakebody.length, headindex = L-1;
+	var oldhead = snakebody[headindex];
+	var l = Math.floor(oldhead / row); // caculate snake head LINE position
+	var r = oldhead % row; // caculate snake head ROW position
+	switch (key) {
+		case 119: // up=>key 'w'
+			if (!iscycled && l <= 0) {
+				game_over();
+				return;
+			}
+			l = (line + (l - 1)) % line;
+			break;
+		case 100: // right=>key 'd'
+			if (!iscycled && r >= row-1) {
+				game_over();
+				return;
+			}
+			r = (r + 1) % row;
+			break;
+		case 115: // down=>key 's'
+			if (!iscycled && l >= line-1) {
+				game_over();
+				return;
+			}
+			l = (l + 1) % line;
+			break;
+		case 97: // left=>key 'a'
+			if (!iscycled && r <= 0) {
+				game_over();
+				return;
+			}
+			r = (row + (r - 1)) % row;
+			break;
+	}
+	direction = key;
+	var i, newhead = row*l + r;
+	if (nextpoint == newhead) {
+		change(oldhead, bodycolor);
+		snakebody.push(newhead);
+		change(newhead, headcolor);
+		var mx = line*row;
+		nextpoint = get_random( mx );
+		for (i=0; i < L; i++) {
+			if (nextpoint == snakebody[i]) {
+				nextpoint = get_random( mx );
+				i = -1;	
+			}
+		}
+		change(nextpoint, nextcolor);
+		var scr = $("score");
+		if (L < 10) {
+			scr.innerHTML = "得分: 000" + L;
+		} else if (L < 100) {
+			scr.innerHTML = "得分: 00" + L;
+		} else if (L < 1000) {
+			scr.innerHTML = "得分: 0" + L;
+		} else {
+			scr.innerHTML = "得分: " + L;
+		}
+	} else { // haven't eat the next point
+		change(snakebody[0], bgcolor); // chage snake tail's color
+		if (L > 1) { // snake body consists of more than one point
+			change(snakebody[1], bodycolor); // change the previous snake head's color
+			change(snakebody[headindex], bodycolor);
+		}
+		for (i=0; i < L-1; i++) {
+			if (snakebody[i] == newhead) {
+				gameover = true;
+				break;
+			}
+			snakebody[i] = snakebody[i+1];
+		}
+		change(newhead, headcolor);
+		if (newhead == snakebody[L-1] || gameover == true) {
+			game_over();
+		}
+		snakebody[L-1] = newhead;
+	}
+	return;
+}
+
+function start (key) {
+	ID = setInterval(
+		function () {
+			handle_press(key);
+		},
+		speed
+	);
+}
+
+function event_handler( key ) {
+	if (gameover) {
+		return;
+	}
+	if (key==119 || key==100 || key==115 || key==97 ) {
+		if (direction != key || called) {
+			if (Math.abs(direction - key) < 5) { // the opposite direction
+				return;
+			}
+			if( called )
+				called = false;
+			clear_interval();
+			start(key);
+		}
+		handle_press(key);
+	} else if (key == 112) { // pause
+		clear_interval();
+		if (ispaused) {
+			start(direction);
+			$("state").innerHTML = "进行中&gt;&gt;...";
+		} else {
+			$("state").innerHTML = "已暂停||";
+		}
+		ispaused = !ispaused;
+	}
+}
+
+window.onload = function () {
+	initialize_snake(30, 40, false);
+	create_map();
+	start(direction);
+	if (document.attachEvent) {
+		document.attachEvent("onkeypress", function () {
+			event_handler( event.keyCode );
+		} );
+	} else {
+		document.addEventListener("keypress", function (evt) {
+			event_handler( evt.which );
+		}, false );
+	}
+	$("replay").onclick = function () {
+		clear_interval();
+		initialize_snake();
+		create_map();
+		direction = 100;
+		gameover = false;
+		ispaused = false;
+		called = false;
+		start( direction );
+		$("state").innerHTML = "进行中&gt;&gt;...";
+		$("score").innerHTML = "得分: 0000";
+	}
+	$("cycle").onclick = function () { iscycled = !iscycled; }
+	$("spd").onchange = function () {
+		called = true;
+		speed = this.value;
+		clear_interval();
+		start(direction);
+	}
+	document.body.oncontextmenu = function () { return false; }
+}
+// -->
+</script>
+</head>
+<body>
+<div id="prompt">
+贪吃蛇,希望你喜欢! 按w上,s下,a左,d右控制移动方向,p暂停/继续<br />
+<input id="replay" type="button" value="重玩" />
+游戏状态: <span id="state">进行中&gt;&gt;...</span>
+<span id="score">得分: 0000</span>
+</div>
+<div id="snake"></div>
+<div id="config">
+速度:
+<select name="spd" id="spd">
+<option value="50">20格/秒</option>
+<option value="100">10格/秒</option>
+<option value="200">5格/秒</option>
+<option value="333" selected="selected">3格/秒</option>
+<option value="500">2格/秒</option>
+<option value="1000">1格/秒</option>
+</select>
+墙壁可穿:
+<input name="cycle" id="cycle" type="checkbox" />
+<span style="text-align:center;">Designed By Wind Fantasy &copy; 2010</span>
+</div>
+</body>
+</html>

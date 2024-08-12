@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Works of grepmusic</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <style type="text/css">
+            pre {
+                background-color: #eee;
+            }
+            a {
+                font-weight: bold;
+                color: #080;
+            }
+            a.detail {
+                font-style: italic;
+                color: #008;
+            }
+        </style>
+    </head>
+    <body>
+        <hr color="#f00"/>
+        <div>
+            <a name="salary-management" id="salary-management" href="#salary-management">Salary management system [C#+MS-SQL]:</a>
+            <p>
+                0. download source code from <a href="http://grepmusic.com/source.tar.bz2">http://grepmusic.com/source.tar.bz2</a> (1.3MB) <br />
+                1. open the project using Visual Studio 2008+ <br />
+                2. change database config in ./EmployeeSalaryManagementSystem/EmployeeSalaryManagementSystem/Program.cs (around Line 54) <br />
+                3. create database in MSSQL server through sql file ./EmployeeSalaryManagementSystem/ims.sql <br />
+                4. build the project and run to test <br />
+                <br />
+                All source code can be downloaded from <a href="http://grepmusic.com/source.tar.bz2">http://grepmusic.com/source.tar.bz2</a> (1.3MB)
+            <pre>
+|-- Salary management system 人事工资管理系统(C#+MSSQL)
+|   |-- EmployeeSalaryManagementSystem
+|   |-- 人事工资管理系统.doc
+|   `-- 这个系统是大三下学期的C#课程设计
+|-- C语言小程序
+|   |-- 十六进制位查看器.c
+|   `-- 简易文本编辑器.c
+|-- Five in a row 五子棋(C)
+|   |-- 五子棋.c
+|   `-- 五子棋.exe
+|-- Five or more.html
+|-- Goods inventory management system  货物进销存管理系统(PHP+MySQL)
+|   |-- add.php
+|   |-- adduser.php
+|   |-- admin.php
+|   |-- agree.php
+|   |-- applyfor.php
+|   |-- autocomplete.php
+|   |-- css
+|   |-- delete.php
+|   |-- deny.php
+|   |-- edit.php
+|   |-- import.php
+|   |-- includes
+|   |-- index.php
+|   |-- js
+|   |-- list.php
+|   |-- location.php
+|   |-- logout.php
+|   |-- manager.php
+|   |-- mysql_connection.php
+|   |-- sql
+|   |-- throw.php
+|   |-- view.php
+|   `-- view_record.php
+|-- Minesweeping.html
+|-- Snake.html
+|-- Tetris.html
+|-- javascript_highlight.html
+|-- online video downloading 在线视频下载(C+Python+Bash)
+|   |-- dl.py
+|   |-- flvmerge.c
+|   |-- g
+|   `-- readme.txt
+`-- simple bbs 微型论坛系统(PHP+MySQL)
+    |-- Microbbs system design.txt
+    |-- error.php
+    |-- footer.php
+    |-- header.php
+    |-- include
+    |-- index.php
+    |-- invitation.php
+    |-- login.php
+    |-- logout.php
+    |-- mysql_connection.inc.php
+    |-- new.php
+    |-- register.php
+    `-- windfantasy.ico
+
+12 directories, 46 files
+            </pre>
+            </p>
+        </div>
+        
+        <hr color="#f00"/>
+        <div>
+            <a name="online-downloading" id="online-downloading" href="#online-downloading">Source Code of Online video downloading and merging [C+python+bash]:</a>
+            <p>for more details, please visit: <a class="detail" target="_blank" href="http://www.cnblogs.com/-Wind/archive/2012/01/30/dov.html">http://www.cnblogs.com/-Wind/archive/2012/01/30/dov.html</a></p>
+            <h4>File ~/dl.py:</h4>
+            <pre>
+#!/usr/bin/env python
+
+import sys
+
+def output(s):
+  sys.stderr.write(s + "\n") # output progress to stderr(Notice that it is NOT for outputing actual error message, 
+                             # I use stderr just to catch stdout easily(the same as curl) so i can merge these flvs later)
+
+argc = len(sys.argv)
+if argc == 2:
+  format = 'super'
+elif argc == 3:
+  format = sys.argv[2]
+else:
+  output("Usage: %s videourl [videoquality=normal|high|super|...]" % sys.argv[0])
+  output(" e.g.")
+  output("   %s http://v.youku.com/v_show/id_XMzMzMjE0MjE2.html super" % sys.argv[0])
+  exit(1)
+
+videourl = sys.argv[1]
+
+import urllib2
+import urllib
+url = 'http://www.flvcd.com/parse.php?kw=' + urllib.quote(videourl)  + '&format=' + format
+user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'
+
+req = urllib2.Request(url)
+# add some headers to fake Chrome Browser(if we don't do so, there will be a problem when try to get tudou video)
+req.add_header('host', 'www.flvcd.com')
+req.add_header('Referer', 'http://www.flvcd.com')
+req.add_header('User-Agent', user_agent)
+req.add_header('Accept-Language', 'en-us,en;q=0.5')
+req.add_header('Accept-Encoding', 'gzip, deflate')
+req.add_header('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7')
+# req.add_header('Keep-Alive', '115')
+res = urllib2.urlopen(req)
+html = res.read()
+
+import re
+pattern = re.compile('&lt;input\s+type="hidden"\s+name="inf"\s+value="([^"]+)')
+firstmatch = pattern.search(html)
+urls = firstmatch.group(1)
+urls = unicode(urls, 'gbk'); # urls turns out to be utf8 encoding
+
+urlpattern = re.compile('&lt;[NU]&gt;(.+)')
+result = urlpattern.findall(urls)
+
+data = [result[i:i+2] for i in range(0, len(result), 2)]
+count = len(data)
+files = []
+
+urllib.URLopener.version = user_agent
+opener = urllib.URLopener();
+output('\n--- Start to download from url "%s" (%d block(s) in total):' % (videourl, count))
+for k, v in enumerate(data):
+  output('  &gt;downloading Block %.2d of %.2d ...' % (k+1, count))
+  filename = (v[0].replace('"', '\\"').replace('/', '') + '.flv').encode('utf-8')
+  if (v[1].find('tudou.com') != -1):
+    opener.retrieve(v[1], filename)
+  else:
+    urllib.urlretrieve(v[1], filename)
+  
+  files.append(filename)
+  output('  downloaded Block.%.2d completely&lt;' % (k+1,))
+output('--- finished ---\n')
+print('"' + '" "'.join(files) + '"')
+            </pre>
+            <h4>
+                File ~/flvmerge.c:
+            </h4>
+            <pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+// #include &lt;malloc.h&gt; // uncomment this line if you are using windows
+
+typedef unsigned char byte;
+
+typedef struct {
+  byte type[3];
+  byte version;
+  byte typeFlag;
+  byte headerLength[4];
+} FlvHeader;
+
+typedef struct {
+  byte tagType;
+  byte dataSize[3];
+  byte timestamp[3];
+  byte timestamp_extension;
+  byte streamID[3];
+  // byte tagData[ dataSize ]
+} FlvTag;
+
+// determine whether current system is big endian(network, media, etc) or not, e.g. int 1 is stored as "00 00 00 01" in
+// big endian machine, while "01 00 00 00" in little endian machine, if we assume that sizeof(int) = 4 and the left
+// address is smaller than the next(right) one
+int is_big_endian() {
+  int i = 0x1;
+  return *(char*)&i != '\x1';
+}
+
+// exit program with exit code exitStatus before printing msg to stderr
+void quit(char* msg, int exitStatus) {
+  fprintf(stderr, "%s", msg);
+  exit(exitStatus);
+}
+
+// convert a raw integer which is read from FLV file to which endian current system fits
+int intval(byte* bits, int size) {
+  int i, ret = 0;
+  if (bits == NULL || size &lt; 1 || size &gt; 4) {
+    quit("invalid bits(is NULL?) or size(out of [1,4]?) when calling intval\n", 1);
+  }
+  if (is_big_endian()) {
+      return *(int*)bits;
+  }
+  for (i = 0; i &lt; size; i++)
+    ret = (int)bits[i] + (ret &lt;&lt; 8);
+  return ret;
+}
+
+// convert an integer stored as which endian current system fits to raw in FLV file
+byte* byteval(int value, int size) {
+  static byte bits[4] = {0};
+  byte* p = (byte*)&value;
+  int i;
+  if (size &lt; 1 || size &gt; 4) {
+    quit("invalid size(out of [1,4]?) when calling byteval\n", 1);
+  }
+  if (is_big_endian()) {
+      *(int*)bits= value;
+  } else {
+      for (i=0; i &lt; 4; ++i)
+        bits[i] = p[3-i];
+  }
+  return bits + 4 - size;
+}
+
+// same as intval, just for double here
+double doubleval(byte* bits) {
+  static byte reverse_bits[8] = {0};
+  int i;
+  if (bits == NULL)
+    quit("invalid bits(is NULL?)\n", 1);
+  if (is_big_endian()) {
+    *(double*)reverse_bits = *(double*)bits;
+  } else {
+    for(i = 0; i &lt; 8; ++i)
+      reverse_bits[i] = bits[7 - i];
+  }
+  return *(double*)reverse_bits;
+}
+
+// same as byteval, just for double here
+byte* bytevaldouble(double value) {
+  static byte bits[8] = {0};
+  byte* p = (byte*)&value;
+  int i;
+  if (is_big_endian()) {
+    *(double*)bits = value;
+  } else {
+    for (i = 0; i &lt; 8; ++i)
+      bits[i] = p[7-i];
+  }
+  return bits;
+}
+
+// return header if successfully, otherwise return NULL
+FlvHeader* flv_header_read(FILE* fp, FlvHeader* header) {
+  return fread(header, sizeof(FlvHeader), 1, fp) == 1 ? header : NULL;
+}
+
+// check if flv header is valid so that we can determine whether we need do merge
+int flv_is_valid_header(FlvHeader* header) {
+  return header && header-&gt;type[0] == 'F' && header-&gt;type[1] == 'L' && header-&gt;type[2] == 'V'
+    && ((header-&gt;typeFlag | 5) == 5);
+}
+
+// read an flv tag from file fp points and save tag [meta] to tag, tag data size to dataSize, previous tag size to
+// previousSize, return pure tag data
+// CAUTION: this function will reserve the last allocated memory by returning a pointer, so memery leak is produced
+// but only ONE leak, you can free it simply by 'byte* data=flv_tag_read(fp,...); /* some operation */ free(data);'
+// but REMEMBER NOT to call flv_tag_read again after the free operation unless you wanna get 'segment fault'-like error, etc.
+byte* flv_tag_read(FILE* fp, FlvTag* tag, int* dataSize, int* previousSize) {
+  static byte* _tagData = NULL;
+  static int _dataSize = 0; // store the length of _tagData
+  int tagSize = 0, countread = fread(tag, sizeof(FlvTag), 1, fp);
+  if (countread != 1)
+    return NULL;
+  tagSize = intval(tag-&gt;dataSize, 3);
+
+  if (_tagData == NULL || _dataSize &lt; tagSize) { // if _tagData is not allocated OR if _tagData is not enough, try to allocate for _tagData again
+    if(_tagData) // but should free the old _tagData before allocates memery to it
+      free(_tagData);
+    _tagData = (byte*)malloc(tagSize * sizeof(byte));
+  }
+  
+  if (fread(_tagData, sizeof(byte), tagSize, fp) != tagSize || 
+    fread(previousSize, sizeof(int), 1, fp) != 1 ) {
+    quit("FLV tag data(broken tag data or broken previous size?) is broken.\n", 1);
+  }
+  *dataSize = _dataSize = tagSize;
+  *previousSize = *(int*)byteval(*previousSize, 4);
+  return _tagData;
+}
+
+// use the most stupid searching algorithm to search binary data search in binary data data
+// return index in data if found search, otherwise return -1
+int stupid_byte_indexof(byte* search, int searchLength, byte* data, int dataSize) {
+  int i, j, end = dataSize - searchLength, found;
+  if (search == NULL || data == NULL || end &lt; 0 || searchLength &lt; 1)
+    quit("invalid arguments when searching", 1);
+  for (i=0; i &lt; end; ++i) {
+    found = 1;
+    for(j=0; j &lt; searchLength; ++j)
+      if (data[j] != search[j]) {
+        found = 0;
+        break;
+      }
+    if (found)
+      return i;
+    data++;
+  }
+  return -1;
+}
+
+// strip keyframes data in script data tag and rewrite the hasKeyframes to false
+byte* flv_scriptdata_strip_keyframes(FlvTag* tag, byte* scripttagData, int* dataSize) {
+  byte hasKeyframes[] = {'h', 'a', 's', 'K', 'e', 'y', 'f', 'r', 'a', 'm', 'e', 's', '\x1'};
+  byte keyframes[] = {'\x0', '\x9', 'k', 'e', 'y', 'f', 'r', 'a', 'm', 'e', 's', '\x3'};
+  byte* ds = NULL;
+  int len = sizeof(hasKeyframes)/sizeof(byte);
+  int index;
+
+  if (! tag || tag-&gt;tagType != 0x12 || ! scripttagData || ! dataSize) {
+    quit(/span/span"can't strip non-scriptdata's[null or video/audio tag data?] keyframes or null pointer", 1);
+  }
+  
+  index = stupid_byte_indexof(hasKeyframes, len, scripttagData, *dataSize - 1);
+  if (index != -1)
+    scripttagData[index + len] = '\x0';
+  index = stupid_byte_indexof(keyframes, sizeof(keyframes)/sizeof(byte), scripttagData, *dataSize);
+  if (index != -1) {
+    *dataSize = index;
+    ds = byteval(index, 3);
+    tag-&gt;dataSize[0] = ds[0];
+    tag-&gt;dataSize[1] = ds[1];
+    tag-&gt;dataSize[2] = ds[2];
+  }
+  return scripttagData;
+}
+
+// write an flv tag to file fp points with tag [meta] tag, tag data tagData and previous tag size previousSize
+// return bytes written if successful, otherwise return 0
+int flv_tag_write(FILE* fp, FlvTag* tag, byte* tagData, int* dataSize, int* previousSize) {
+  if (
+    fwrite(tag, sizeof(FlvTag), 1, fp) != 1 ||
+    fwrite(tagData, sizeof(byte), *dataSize, fp) != *dataSize ||
+    fwrite(previousSize, sizeof(int), 1, fp) != 1
+    ) {
+    return 0;
+  }
+  return sizeof(FlvTag) + *dataSize * sizeof(byte) + sizeof(int);
+}
+
+// get duration from an flv SCRIPT tag data(pure data) and save duration index where we found 
+// duration in FLV file to offset if offset is not NULL
+double flv_tag_get_duration(byte* tagData, int dataSize, int* offset) {
+  // make sure tag is script tag, that is: tag.tagType == 0x12
+  byte search[9] = { 'd', 'u', 'r', 'a', 't', 'i', 'o', 'n', '\0' };
+  int index = stupid_byte_indexof(search, 9, tagData, dataSize);
+
+  if (index == -1) {
+    quit("Sorry, can't get flv meta duration.", 1);
+  }
+
+  index += sizeof(search)/sizeof(byte);
+  if (offset)
+    *offset = index;
+  return doubleval(tagData + index);
+}
+
+// get timestamp from an flv tag [meta]
+int flv_tag_get_timestamp(FlvTag* tag) {
+  if (! tag)
+    return -1;
+  return ((int)(tag-&gt;timestamp_extension) &lt;&lt; 24) + intval(tag-&gt;timestamp, 3);
+}
+
+// set timestamp to an flv tag [meta]
+int flv_tag_set_timestamp(FlvTag* tag, int timestamp) {
+  if (! tag || timestamp &lt; 0)
+    return -1;
+  tag-&gt;timestamp_extension = timestamp &gt;&gt; 24;
+  memcpy(tag-&gt;timestamp, byteval(timestamp & 0x00FFFFFF, 3), 3);
+  return timestamp;
+}
+
+int main(int argc, char* argv[]) {
+
+  FlvHeader header;
+  FlvTag tag;
+  byte* tagData;
+  FILE *fpdst = NULL, *fpsrc = NULL;
+  int i = 0, srccount = argc - 2, headerLength, duration_index = 0, 
+    prevSize, dataSize, offset, foundduration = 0, zero = 0, basetimestamp[2], lasttimestamp[2] = {0};
+  char** src = argv + 2;
+  double duration = 0.0;
+
+  int bts = 0;
+
+  if (argc &lt; 2) {
+    fprintf(stderr, "Usage: %s flvtobesaved 1stflv [2ndflv [3rdflv [...]]]\n", argv[0]);
+    exit(1);
+  }
+  if ((fpdst = fopen(argv[1], "wb")) == NULL) {
+    fprintf(stderr, "Can't write to file '%s'\n", argv[1]);
+    exit(1);
+  }
+  
+  while (i &lt; srccount) {
+    if ((fpsrc = fopen(src[i], "rb")) == NULL) {
+      fprintf(stderr, "Can't open file '%s'\n", src[i]);
+      exit(1);
+    }
+    
+    if(! flv_header_read(fpsrc, &header) || ! flv_is_valid_header(&header)) {
+      fprintf(stderr, "The header of file '%s' is broken or is not FLV header.\n", src[i]);
+      exit(1);
+    }
+
+    if (i == 0) {
+      fwrite(&header, sizeof(FlvHeader), 1, fpdst);
+      fwrite(&zero, sizeof(int), 1, fpdst); // the first previous tag size is 0
+      duration_index = sizeof(FlvHeader);
+    }
+
+    headerLength = intval(header.headerLength, 4);
+    
+    if (0 != fseek(fpsrc, headerLength+4, SEEK_SET)) { // skip to real flv tag data(skip the first previous tag size, +4)
+      fprintf(stderr, "The first previousSize(should be 0) of file '%s' is broken.\n", src[i]);
+      exit(1);
+    }
+
+    bts = (int)(duration * 1000);
+    basetimestamp[0] = lasttimestamp[0];
+    basetimestamp[1] = lasttimestamp[1];
+    if (bts &lt; basetimestamp[0])
+      bts = basetimestamp[0];
+    if (bts &lt; basetimestamp[1])
+      bts = basetimestamp[1];
+    foundduration = 0;
+
+    while (tagData = flv_tag_read(fpsrc, &tag, &dataSize, &prevSize)) {
+
+      if (tag.tagType == 0x12 && ! foundduration) { // if script data and duration not found, try to get duration
+        duration += flv_tag_get_duration(tagData, dataSize, &offset);
+        foundduration = 1;
+        if (i == 0) { // prepare the script data for writing, we choose the first FLV file header as sample
+          duration_index += 4 + sizeof(FlvTag) + offset;
+          
+          flv_scriptdata_strip_keyframes(&tag, tagData, &dataSize);
+          
+          flv_tag_write(fpdst, &tag, tagData, &dataSize, &prevSize);
+        }
+      } else if (tag.tagType == 0x8 || tag.tagType == 0x9) {
+
+        lasttimestamp[tag.tagType - 0x8] = bts + flv_tag_get_timestamp(&tag);
+        flv_tag_set_timestamp(&tag, lasttimestamp[tag.tagType - 0x8]);
+
+        flv_tag_write(fpdst, &tag, tagData, &dataSize, &prevSize);
+        if (i == 0 && ! foundduration) {
+          duration_index += 4 + sizeof(FlvTag) + dataSize;
+        }
+      }
+    }
+
+    //fprintf(stdout, "base: %d, last: %d\n", basetimestamp[0], lasttimestamp[0]);
+    printf("completely merging file '%s' to '%s'\n", src[i], argv[1]);
+
+    fclose(fpsrc);
+
+    ++i;
+  }
+  if (0 != fseek(fpdst, duration_index, SEEK_SET))
+    quit("can't seek to duration\n", 1);
+  fwrite(bytevaldouble(duration), 1, 8, fpdst); // save real duration to file
+  fclose(fpdst);
+
+  return 0;
+}
+            </pre>
+            <h4>File ~/g:</h4>
+            <pre>
+#!/bin/bash
+
+if [ "$#" -ne 1 -a "$#" -ne 2 ]
+then
+  echo "Usage: $0 videourl [videoquality=normal|high|super|...]"
+  echo ' e.g.'
+  echo "   $0 http://v.youku.com/v_show/id_XMzMzMjE0MjE2.html super"
+  exit 1
+fi
+
+files=$(~/dl.py "$1" "$2")
+
+eval set "$files"
+
+if [ "$#" -gt 1 ]
+then
+  mergedfile=$(echo "$1" | sed 's/[0-9]*.flv$/_merged.flv/')
+  echo "starting merging files to file '$mergedfile'"
+  ~/flvmerge "$mergedfile" "$@"
+  echo "--- completely merging files to file '$mergedfile'"
+  echo 
+fi
+            </pre>
+        </div>
+        <hr color="#f00" />
+        <div>
+            <a name="five-in-a-row" id="five-in-a-row" href="#five-in-a-row">Source Code of Five In A Row [C]:</a>
+            <p>for more details, please visit: <a class="detail" target="_blank" href="http://topic.csdn.net/u/20101106/03/6ac2d7e7-43fe-4baa-989b-f09a8dc62a6c.html">http://topic.csdn.net/u/20101106/03/6ac2d7e7-43fe-4baa-989b-f09a8dc62a6c.html</a></p>
+            <pre>
+/*简陋的五子棋游戏*/
+#include &lt;stdio.h&gt;
+#include &lt;conio.h&gt;
+#include &lt;windows.h&gt;
+#define N 19
+#define SetColor(x) SetConsoleTextAttribute(setcolor,x)
+
+short LineNo_Color=15,RowNo_Color=15,Check_Color=6,X_Color=10,O_Color=12,
+Menu_Color=7,Game_Options_Color=7,Help_Color=7,Open_Sound=1,Auto_Save_Ending=1;
+/*
+以上全局变量依次表示:
+行序号颜色,列序号颜色,棋盘格线颜色,玩家1的棋子'X'颜色,玩家2的棋子'O'颜色,游戏主菜单GAME_MENU颜色,
+游戏设定菜单Game_Options颜色,"关于游戏"的颜色,是否开启游戏提示音,是否开启棋局终局自动保存
+*/
+
+void Init_Chess( int (*a)[N] )/*初始化棋盘,置棋盘上无任何棋子*/
+{
+	int i, j;
+	for( i = 0; i &lt; N; i++ )
+		for( j = 0; j &lt; N; j++ )
+			a[ i ][ j ] = ' ';
+}
+
+int String_to_Int( char* s , int max )/*字符串条件转化成整型*/
+{
+	int i, n = 0;
+	for( i=0; s[ i ] &lt;= '9' && s[ i ] &gt;= '0'; i++ )
+		n = 10 * n + s[ i ] - '0' ; /* " s[ i ] - '0' ", not " s[ i ] - '\0' " */
+		return ( ( s[ i ] == '\0' ) && ( max &lt; 0 || n &lt;= max ) ) ? n : -1;
+}
+/*
+任何一个输入都可以看成是一个不定长的字符串,此函数用来处理非法输入问题,比如输入整型数据时输入了含有字母等非数字字符
+*/
+
+void Print_Chess( int (*a)[N] )/*输出棋局,或者说画棋盘*/
+{
+	int i, j;
+	HANDLE setcolor=GetStdHandle( STD_OUTPUT_HANDLE );
+	SetColor( 11 );/*设定颜色*/
+	printf("Designed by Wind Fantasy\n");
+	SetColor( LineNo_Color );
+	printf("L\\R 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19\n");
+	for( i = 0; i &lt; N; i++ )
+	{
+		SetColor( Check_Color );
+		printf("  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
+		SetColor(RowNo_Color);
+		printf( "%2d" , i + 1 );
+		SetColor( Check_Color );
+		printf("|");
+		for( j = 0; j &lt; N; j++ )
+		{
+			if( a[i][j] == 'X' )
+				SetColor( X_Color );
+			else
+				SetColor( O_Color );
+			printf(" %c " , a[ i ][ j ] );
+			SetColor( Check_Color );
+			printf("|");
+		}
+		printf("\n");
+	}
+	printf("  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
+}
+
+int Game_Over1( int (*a)[N] , int chess_symbol )/* "-"形或者"|"形呈龙(事实上"-"与"|"关于"\"对称) */
+{
+	int i, j, k, l, r;
+	for( i=0; i &lt; N; i++ )
+		for( k=0; k &lt; N-4; k++ )
+		{
+			l=r=0;
+			for( j=k; j &lt; k+5; j++ )/* algorithm error: "j &lt; k+5;" not "j &lt; j+5;" */
+			{
+				if( a[i][j] == chess_symbol )/* "-"形呈龙 */
+					l++;
+				if( a[j][i] == chess_symbol )/* "|"形呈龙 */
+					r++;
+			}
+			if( l == 5 || r == 5 )/*连续的5个棋子在一条直线上时,游戏结束*/
+				return 1;
+		}
+		return 0;
+}
+
+int Game_Over2( int (*a)[N] , int chess_symbol )/* "\"形呈龙 */
+{
+	int i, j, k, m, LeftDown, RightUp;
+	for( m=0; m &lt; N-4; m++ )
+		for( k=0; k &lt; N-4-m; k++ )
+		{
+			RightUp=LeftDown=0;
+			for( i=k , j=k+m;  i &lt; k+5;  i++ , j++ )
+			{
+				if( a[i][j] == chess_symbol )/* 对角线"\"上及其右上方的"\"形呈龙 */
+					RightUp++;
+				if( a[j][i] == chess_symbol )/* 对角线"\"上及其左下方的"\"形呈龙 */
+					LeftDown++;
+			}
+			if( RightUp == 5 || LeftDown == 5 )
+				return 1;
+		}
+		return 0;
+}
+
+int Game_Over3( int (*a)[N] , int chess_symbol )/* "/"形呈龙 */
+{
+	int i, j, k, m, LeftUp, RightDown;
+		for( m=N-1; m &gt;= 4; m-- )
+		for( k=0; k &lt; m + 1 - 4; k++ )
+		{
+			RightDown=LeftUp=0;
+			for( i=k , j= m - k;  i &lt; k+5;  i++ , j-- )
+			{
+				if( a[i][j] == chess_symbol )/* 对角线"/"上及其左上方的"/"形呈龙 */
+					LeftUp++;
+				if( a[N-1-j][N-1-i] == chess_symbol )/* 对角线"/"上及其右下方的"/"形呈龙 */
+					RightDown++;/* 上面应该是 "a[N-1-j][N-1-i] " , 而不是 " a[N-j][N-i] " */
+			}
+			if( RightDown == 5 || LeftUp == 5 )
+				return 1;
+		}
+		return 0;
+}
+/*
+以上三个函数通过遍历棋盘所有的可能呈龙情况以判定游戏是否over了
+*/
+
+int Save_Chess( int (*a)[N] , char* ss )/*保存棋局*/
+{
+	int i, j;
+	FILE* fp;
+	if( strcmp( ss , "save" ) == 0 )/*保存当前未结束的棋局*/
+		if( ( fp = fopen( "Save.sav" , "w" ) ) == NULL )
+		{
+			printf(" Can't open file \"Save.sav\" !\n");
+			return 0;
+		}
+		else
+			printf("当前棋局已经成功保存到存档文件\"Save.sav\"中!\n");
+	else                            /*保存棋局终局*/
+		if( ( fp = fopen( "Ending.txt" , "a" ) ) == NULL )
+		{
+			printf(" Can't open file \"Ending.txt\" !\n");
+			return 0;
+		}
+		else
+			printf("棋局终局已经成功保存到文本文件\"Ending.txt\"中!\n");
+	fprintf( fp , "Designed by Wind Fantasy\n" );
+	fprintf( fp , "L\\R 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19\n" );
+	for( i = 0; i &lt; N; i++ )
+	{
+		fprintf( fp , "  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n" );
+		fprintf( fp , "%2d|" , i + 1 );
+		for( j = 0; j &lt; N; j++ )
+			fprintf( fp , " %c |" , a[ i ][ j ] );
+		fprintf( fp , "\n" );
+	}
+	fprintf( fp , "  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n" );
+	fclose(fp);
+	return 1;
+}
+
+int Save_Options( )/*保存游戏设定*/
+{
+	FILE* fp;
+	if( ( fp = fopen( "Config.ini" , "w" ) ) == NULL )
+	{
+		printf("Can't open file \"Config.ini\" !\n");
+		return 0;
+	}
+	fprintf( fp , "LineNo_Color=%d\nRowNo_Color=%d\nCheck_Color=%d\nX_Color=%d\n" , LineNo_Color ,RowNo_Color , Check_Color , X_Color );
+	fprintf( fp , "O_Color=%d\nMenu_Color=%d\nGame_Options_Color=%d\n" , O_Color , Menu_Color , Game_Options_Color );
+	fprintf( fp , "Help_Color=%d\nOpen_Sound=%d\nAuto_Save_Ending=%d\n" , Help_Color , Open_Sound , Auto_Save_Ending );
+	fclose(fp);
+	printf("当前游戏设定已经成功保存到配置文件\"Config.ini\"中!\n");
+	return 1;
+}
+
+int Load_Chess( int (*a)[N] )/*读取棋局*/
+{
+	int j , k , X_Number =0 , O_Number = 0 ;
+	char c;
+	double i = - 1.5;
+	FILE* fp;
+	if( ( fp = fopen ( "Save.sav" , "r" ) ) == NULL )/*检测存档文件"Save.sav"是否在当前目录下*/
+		return 0;
+	Init_Chess( a );/*先初始化棋盘*/
+	c = fgetc(fp);
+	while( c != EOF )
+	{
+		if( c == 'X' )
+			X_Number++;
+		else
+			if( c == 'O' )
+				O_Number++;
+			c = fgetc(fp);
+	}
+	if( X_Number - O_Number &gt; 1 || X_Number - O_Number &lt; -1 )/*检查棋盘数据是否合法*/
+		return -1;
+	rewind(fp);/*文件指针移至文件首*/
+	c = fgetc(fp);
+	while( c != EOF && i &lt; N )/*确保数组不越界*/
+	{
+		if( c == '\n' )
+		{
+			i += 0.5;
+			k=0;
+		}
+		if( c == 'X' )
+		{
+			j = k / 4 - 1;/*棋盘数据的分布规律*/
+			a[ (int)i ][ j ] = 'X';/*读取档案数据*/
+		}
+		if( c == 'O' )
+		{
+			j = k / 4 - 1;
+			a[ (int)i ][ j ] = 'O';
+		}
+		c=fgetc(fp);
+		k++;
+	}
+	fclose(fp);
+	return X_Number &gt; O_Number ? 2 : 1;/*返回读档后的优先下棋的玩家*/
+}
+
+int Load_Options( )/*读取游戏设定*/
+{
+	char c;
+	short Option_Value[10] = { 0 } , i = 0 ;
+	FILE* fp;
+	if( ( fp = fopen( "Config.ini" , "r" ) ) == NULL )/*检测配置文件"Config.ini"是否在当前目录下*/
+		return 0;
+	c=fgetc(fp);
+	while( c != EOF )
+	{
+		if( c &lt;= '9' && c &gt;= '0' )
+			Option_Value[ i ] = 10 * Option_Value[ i ] + c - '0' ;/*" c - '0' " , not " c "*/
+		if( c == '\n' )
+		{
+			if( Option_Value[ i ] &lt; 1 && i &lt; 8 )/*确保颜色属性值合法,即不小于1*/
+				return -1;
+			i++;
+		}
+		c=fgetc(fp);
+	}
+	fclose(fp);
+	LineNo_Color = Option_Value[0];/*加载配置文件"Config.ini"中的设定*/
+	RowNo_Color = Option_Value[1];
+	Check_Color = Option_Value[2];
+	X_Color = Option_Value[3];
+	O_Color = Option_Value[4];
+	Menu_Color = Option_Value[5];
+	Game_Options_Color = Option_Value[6];
+	Help_Color = Option_Value[7];
+	Open_Sound = Option_Value[8];
+	Auto_Save_Ending = Option_Value[9];
+	return 1;
+}
+
+int Game_Options( )/*游戏设定*/
+{
+	HANDLE setcolor=GetStdHandle(STD_OUTPUT_HANDLE);
+	int temp;
+	short i;
+	char s[10];
+		while(1)
+			{
+				system("cls");
+				SetColor(11);
+				printf("Designed by Wind Fantasy\n");
+				SetColor(Game_Options_Color);
+				printf("*-*-*-*-*-*-*Game_Options*-*-*-*-*-*-*\n");
+                printf(" 1.查看各种颜色的属性值(1-15);\n");
+                printf(" 2.设定行序号的颜色;\n");
+                printf(" 3.设定列序号的颜色;\n");
+                printf(" 4.设定棋局格线(棋盘)的颜色;\n");
+                printf(" 5.设定玩家1的棋子的颜色;\n");
+                printf(" 6.设定玩家2的棋子的颜色;\n");
+                printf(" 7.设定游戏主菜单Game_Menu的颜色;\n");
+                printf(" 8.设定游戏设定菜单Game_Options的颜色;\n");
+                printf(" 9.设定\"关于游戏\"的颜色;\n");
+                printf("10.设定是否开启游戏提示音;\n");
+                printf("11.设定是否开启棋局终局自动保存;\n");
+                printf("12.保存当前设定到配置文件Config.ini中;\n");
+                printf("13.加载配置文件Config.ini中的设定;\n");
+                printf("14.恢复游戏设定至默认值;\n");
+                printf("15.退出游戏设定菜单Game_Options.\n");
+                printf("请输入一个整数以决定你要设定的项目:");
+				scanf("%s",s);
+		        temp = String_to_Int( s , 15 );
+		        switch( temp )
+				{
+				case 1:
+					system("cls");
+					for( i=1 ; i &lt; 16 ; i++ )
+					{
+						SetColor( i );
+						printf( "%d是当前其显示的颜色的属性值!\n" , i );
+					}
+					break;
+				case 2:
+					printf("请输入行序号颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						LineNo_Color = temp;
+						printf("已成功设定行序号的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 3:
+					printf("请输入列序号颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						RowNo_Color = temp;
+						printf("已成功设定列序号的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 4:
+					printf("请输入棋局格线(棋盘)颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						Check_Color = temp;
+						printf("已成功设定棋局格线(棋盘)的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 5:
+					printf("请输入玩家1的棋子(棋子符号'X')颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						X_Color = temp;
+						printf("已成功设定玩家1的棋子的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 6:
+					printf("请输入玩家2的棋子(棋子符号'O')颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						O_Color = temp;
+						printf("已成功设定玩家2的棋子的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 7:
+					printf("请输入游戏主菜单Game_Menu的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Menu_Color = temp;
+						printf("已成功设定游戏主菜单Game_Menu的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 8:
+					printf("请输入游戏设定菜单Game_Options的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Game_Options_Color = temp;
+						printf("已成功设定游戏设定菜单Game_Options的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 9:
+					printf("请输入\"关于游戏\"的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Help_Color = temp;
+						printf("已成功设定\"关于游戏\"的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 10:
+					printf("请输入\"yes\"(不含引号\",下同)开启游戏提示音或输入\"no\"关闭游戏提示音:");
+					scanf("%s",s);
+					if( strcmp( s , "yes" ) == 0 )
+					{
+						Open_Sound = 1 ;
+						printf("游戏提示音已开启!\n");
+					}
+					else
+						if( strcmp( s , "no" ) == 0 )
+						{
+							Open_Sound = 0 ;
+							printf("游戏提示音已关闭!\n");
+						}
+						else
+							printf("对不起,输入错误!\n");
+						break;
+				case 11:
+					printf("请输入\"yes\"开启棋局终局自动保存或输入\"no\"关闭自动保存:");
+					scanf("%s",s);
+					if( strcmp( s , "yes" ) == 0 )
+					{
+						Auto_Save_Ending = 1 ;
+						printf("棋局终局自动保存已开启!\n");
+					}
+					else
+						if( strcmp( s , "no" ) == 0 )
+						{
+							Auto_Save_Ending = 0 ;
+							printf("棋局终局自动保存已关闭!\n");
+						}
+						else
+							printf("对不起,输入错误!\n");
+						break;
+				case 12:
+					Save_Options( );
+					break;
+				case 13:
+					temp = Load_Options( );/*读取配置文件"Config.ini"中的游戏设定,并检查配置文件数据是否合法*/
+					if( temp == 0 )
+						printf("对不起,无法打开配置文件\"Config.ini\"!\n请确保配置文件\"Config.ini\"在当前文件夹下.\n");
+					else
+						if( temp == -1 )
+							printf("对不起,无法加载配置文件\"Config.ini\"!因为文件中存在非法数据.\n");
+						else
+							if( temp = 1 )
+							printf("已经成功读取配置文件\"Config.ini\"中的游戏设定!\n");
+					break;
+				case 14:
+					LineNo_Color=15;/*加载游戏设定的默认值*/
+					RowNo_Color=15;
+					Check_Color=6;
+					X_Color=10;
+					O_Color=12;
+					Menu_Color=7;
+					Game_Options_Color=7;
+					Help_Color=7;
+					Open_Sound=1;
+					Auto_Save_Ending=1;
+					printf("游戏设定已经恢复为默认值!\n");
+					break;
+				case 15:
+					return 0;
+				default:
+					printf("对不起,输入错误! 请在游戏设定菜单Game_Options中重新输入.\n");
+				}
+				SetColor( Game_Options_Color );
+				printf("按任意键返回游戏设定菜单Game_Options.");
+		        getch();
+			}
+		return 1;
+}
+
+void About_Game( )/*游戏帮助*/
+{
+	HANDLE setcolor = GetStdHandle( STD_OUTPUT_HANDLE );
+	system(" cls ");
+	SetColor( 11 );
+	printf("Designed by Wind Fantasy\n");
+	SetColor( Help_Color );
+	printf("一个简朴的五子棋游戏，希望你能喜欢!\\&lt;^+^&gt;/\n\n1.游戏规则:\n\n");
+	printf("玩家1和玩家2轮流在棋盘(19X19)上任意空闲位置(没有棋子)放置一个棋子,放置的方法是输入要放置的棋子的位置(即该棋子所在");
+	printf("的行的序号和所在的列的序号,棋盘中L、R分别表示行(Line)、列((Row)),同一玩家所放棋子中任意五个或五个以上棋子较先呈现");
+	printf("连续在同一直线(四种形式|、-、/、\\)上的玩家获胜!\n\n2.游戏操作:\n\n");
+	printf("(1)在游戏主菜单“Game_Menu”中输入相应的数字并回车即可执行相应的操作，第一次玩请先输入5并回车查看游戏帮助，然后返");
+	printf("回“Game_Menu”后输入1并回车选择“新的棋局”开始游戏.“新的棋局”将开始一场新的游戏,棋盘数据将被初始化，在进行“新");
+	printf("的棋局”前有必要的话(比如第n次玩,n&gt;1且是整数)请注意保存之前的棋局;\n\n1/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("(2)“新的棋局”开始后如果中途想返回游戏主菜单“Game_Menu”执行其他操作请在“请输入要放的棋子所在的行(L)的序号:”时");
+	printf("输入“exit”(不含引号,下同)并回车即可，如果想要继续游戏的话请输入2并回车选择“继续当前棋局”，注意“当前棋局”指的");
+	printf("是在游戏程序没有关闭情况下的当前棋局，如果没有进行游戏,则当前棋局则为空棋局;\n\n");
+	printf("(3)如果想保存棋局请在“请输入要放的棋子所在的行(L)的序号:”时输入“save”即可将当前棋局存至存档文件Save.sav中，并");
+	printf("且存档文件会自动在游戏主程序“五子棋.exe”所在的文件夹(目录)下建立，以便下次启动游戏时可以在“游戏主菜单”中输入3");
+	printf("并回车选择“从文件中读取已存档的棋局”继续游戏;\n\n");
+	printf("(4)关于游戏设定中设定颜色时，请在游戏设定菜单“Game_Options”先输入1查看各种颜色对应的属性值(范围1-15)，然后根据个");
+	printf("人喜好(输入颜色的属性值以)设定各个选项的颜色;\n\n");
+	printf("(5)“游戏提示音”是在游戏进行过程中对玩家的非法输入和玩家的获胜进行提醒的,“棋局终局自动保存”是任一玩家获胜后游戏");
+	printf("自动对棋局终局的保存,终局保存在Ending.txt中，以便玩家在游戏结束后对棋局进行研究;\n\n2/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("(6)游戏设定是可以保存在配置文件“Config.ini”中，配置文件中各参数及值(以下是默认值)的意义分别是:LineNo_Color=15(");
+	printf("行序号颜色=亮白)，RowNo_Color=15(列序号颜色=亮白)，Check_Color=6(棋局格线(棋盘)颜色=暗黄)，X_Color=10(玩家1的棋子");
+	printf("颜色=鲜绿)，O_Color=12(玩家2的棋子颜色=鲜红)，Menu_Color=7(游戏主菜单颜色=白)，Game_Options_Color=7(游戏设定菜单");
+	printf("颜色=白)，Help_Color=7(“关于游戏”颜色=白)，Open_Sound=1(是否开启提示音=是)，Auto_Save_Ending=1(是否开启棋局终局");
+	printf("自动保存=是).内行的玩家可以在配置文件中对游戏的各个选项进行设定，但是颜色属性值请控制在1-255，提示音及自动保存的");
+	printf("值只有两个,分别是0(关)和1(开)，注意修改时请不要更改文本内容结构!每次启动游戏时都是先加载Config.ini中的设定，如果");
+	printf("没有Config.ini，则加载默认的设定;\n\n");
+	printf("(7)棋局存档只能存一个，多次存档会覆盖，并且以最后一次存的档案为准，游戏设定存档也是.棋局终局自动保存则是以追加的");
+	printf("方式保存，即每次的棋局终局都将保存，所以此功能请慎用，因为文本文件Ending.txt将随玩家的多次试玩会越来越大，系统默");
+	printf("认是开启自动保存，主要是想让玩家可以预览此项功能\\&lt;^+^&gt;/.如果已开启此功能，请定期清理文件Ending.txt，以免浪费存储");
+	printf("空间.读取档案时请确保相应的存档文件与游戏主程序“五子棋.exe”在同一文件夹(目录)下，而且尽量不要自行修改存档数据，");
+	printf("以免发生错误.\n\n3/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("3.游戏说明:\n\n(1)启动游戏后请将游戏窗口最大化并将右侧的滚动条滑至最上端以获得最佳的游戏显示效果;\n\n");
+	printf("(2)这是我编的第一个成型游戏，由于本人水平有限，所以游戏界面只能做到如此程度了，甚是简陋，请各位玩家见谅;\n\n");
+	printf("(3)此游戏可以免费传播，但请不要修改游戏程序本身，不得用于商业用途;(*^+^*)\n\n");
+	printf("(4)游戏中遇到任何问题请和Wind Fantasy(QQ:467321916)联系，欢迎各位玩家提出宝贵的意见，同时也希望各位玩家继续关注");
+	printf("Wind Fantasy的其他作品并支持我;\n\n最后祝各位玩家玩得愉快!\n\n\\&lt;^+^&gt;/\n\n4/4\n");
+}
+
+int main()
+{
+	int a[N][N], i, j, player = 1 , temp ;/*玩家1先下棋*/
+	char s[10];
+	HANDLE setcolor=GetStdHandle(STD_OUTPUT_HANDLE);
+	Init_Chess( a );/*初始化棋局*/
+	Load_Options( );/*加载配置文件"Config.ini"中的游戏设定,如果配置文件不在当前目录下,则游戏设定为默认值*/
+	while(1)
+	{
+		system("cls");
+		SetColor( 11 );
+		printf("Designed by Wind Fantasy\n");
+        printf("A simple quintet game,hope you can enjoy!\\&lt;^+^&gt;/\n");
+		SetColor( Menu_Color );
+		printf("*-*-*-*-*GAME_MENU*-*-*-*-*\n");
+		printf("1.新的棋局;\n");
+		printf("2.继续当前棋局;\n");
+		printf("3.从文件中读取已存档的棋局;\n");
+		printf("4.游戏设定;\n");
+		printf("5.关于游戏;\n");
+		printf("6.退出游戏.\n");
+		printf("请先输入一个数(1-6)后按\"Enter\"键执行相应操作:");
+		scanf("%s",s);
+		temp = String_to_Int( s , 6 );
+		switch( temp )
+		{
+		case 1:
+			Init_Chess( a );
+			player = 1;
+loop:
+			while(1)
+			{
+				system("cls");
+			    Print_Chess( a );/*输出即时棋局*/
+				SetColor( Menu_Color );
+		        printf("玩家%d(棋子符号:'" , player );/*游戏玩家下棋提示*/
+				if( player == 1 )
+					SetColor( X_Color );
+				else
+					SetColor( O_Color );
+				printf( "%c" , player == 1 ? 'X' : 'O' );
+				SetColor( Menu_Color );
+				printf("')下棋:\n" );
+			    printf("请输入要放的棋子所在的行(L)的序号:");
+			    scanf("%s",s);
+				if( strcmp( s , "save" ) == 0 )/*输入"save"保存当前棋局至文件"Save.sav"中*/
+				{
+					Save_Chess( a , "save" );
+					break;
+				}
+				else
+					if( strcmp( s , "exit" ) == 0 )/*输入"exit"暂停游戏并返回游戏主菜单GAME_MENU*/
+						break;
+			    i = String_to_Int( s , N );/* 显然, i &lt;= N */
+				if( i &lt; 1 )/*检测输入的数据是否合法*/
+				{
+					if( Open_Sound )/*游戏提示音*/
+						printf("\a");
+				    printf("对不起,输入错误! 请按任意键返回后重新输入棋子位置.");/*输入错误提示*/
+			        getch();
+				}
+			    else
+				{
+				    printf("请输入要放的棋子所在的列(R)的序号:");
+			        scanf("%s",s);
+			        j = String_to_Int( s , N );
+			        if( j &lt; 1 || a[i-1][j-1] != ' ' )/*检测输入的位置是否不合法:即该位置是否有棋子*/
+					{
+						if( Open_Sound )
+							printf("\a");
+					    printf("对不起,输入错误! 请按任意键返回后重新输入棋子位置.");
+			            getch();
+					}
+			        else
+						if( player == 1 )
+						{
+						    a[i-1][j-1]='X';
+						    if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )/*检测玩家1是否胜出*/
+							{
+							    system("cls");
+						        Print_Chess( a );
+								if( Open_Sound )
+									printf("\a\a");
+								SetColor( X_Color );
+						        printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+								if( Auto_Save_Ending )
+									Save_Chess( a , "ending" );
+								break;
+							}
+						    player=2;/*轮到玩家2下棋了*/
+						}
+						else
+						{
+						    a[i-1][j-1]='O';
+					        if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )/*检测玩家2是否胜出*/
+							{
+							    system("cls");
+						        Print_Chess( a );
+								SetColor( O_Color );
+								if( Open_Sound )
+									printf("\a\a");
+						        printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+								if( Auto_Save_Ending )
+									Save_Chess( a , "ending" );
+								break;
+							}
+					        player=1;/*轮到玩家1下棋了*/
+						}
+				}
+			}
+			break;
+		case 2:
+			if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )
+			{
+				system("cls");
+				Print_Chess( a );
+		     	if( Open_Sound )
+					printf("\a\a");
+			    printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+				if( Auto_Save_Ending )
+					Save_Chess( a , "ending" );
+			}
+			else
+				if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )
+				{
+					system("cls");
+				    Print_Chess( a );
+		     	    if( Open_Sound )
+						printf("\a\a");
+			        printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+				    if( Auto_Save_Ending )
+						Save_Chess( a , "ending" );
+				}/*检测棋局是否还有进行下去的必要*/					
+				else
+					goto loop;/*继续当前棋局*/
+				break;
+		case 3:
+			temp = Load_Chess( a );
+			if( temp == 0 )
+				printf("无法打开存档文件\"Save.sav\"!\n请确保存档文件\"Save.sav\"在当前文件夹下.\n");
+			else
+				if( temp == -1 )
+					printf("非法的棋局存档文件!\n");
+				else
+					if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )
+					{
+						system("cls");
+				        Print_Chess( a );
+		     	        if( Open_Sound )
+							printf("\a\a");
+						SetColor( X_Color );
+			            printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+				        if( Auto_Save_Ending )
+							Save_Chess( a , "ending" );/*保存棋局终局*/
+					}
+					else
+						if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )
+						{
+							system("cls");
+				            Print_Chess( a );
+		     	            if( Open_Sound )
+								printf("\a\a");
+							SetColor( O_Color );
+			                printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+							if( Auto_Save_Ending )
+								Save_Chess( a , "ending" );
+						}/*检测棋局是否还有进行下去的必要*/					
+						else
+						{
+							player=temp;/*继续存档中的棋局*/
+						    goto loop;
+						}
+						break;
+		case 4:
+			Game_Options( );/*游戏设定*/
+			break;
+		case 5:
+			About_Game( );/*关于游戏*/
+			break;
+		case 6:
+			SetColor( 11 );
+			printf("感谢你的试玩,请继续关注Wind Fantasy的其他作品.\n");
+			SetColor(Menu_Color);
+			printf("按任意键退出游戏.");
+			getch();
+			return 0;
+		default:
+			printf("对不起,输入错误! 请在游戏主菜单GAME_MENU中重新输入.\n");/*错误提示*/
+		}
+		SetColor( Menu_Color );
+		printf("按任意键返回游戏主菜单GAME_MENU.");
+		getch();
+	}
+	return 0;
+}
+            </pre>
+        </div>
+        <hr color="#f00" />
+       <div>
+            <a name="text-editor" id="text-editor" href="#text-editor">Source Code of A simple text editor [C]:</a>
+            <p>for more details, please visit: <a class="detail" target="_blank" href="http://blog.csdn.net/wind__fantasy/article/details/5011151">http://blog.csdn.net/wind__fantasy/article/details/5011151</a></p>
+        <pre>
+#include &lt;stdio.h&gt;
+#include &lt;malloc.h&gt;
+#include &lt;conio.h&gt;
+#include &lt;stdlib.h&gt;
+//#include &lt;windows.h&gt;					// 基于Microsoft Visual Studio 2008 编译器开发
+// 若用Borland Turbo C , 请将"#include &lt;windows.h&gt;" 换成 "#define system("cls") clrscr()"
+#define SUCCESS 1						// 定义操作成功的标志为SUCCESS
+#define FAILURE 0						// 定义操作失败的标志为FAILURE
+
+typedef struct _String					// 定义链串结构
+{
+	char character ;					// 组成串的字符( 数据域 )
+	struct _String* next ;				// 指向下一串结构的指针( 链域 )
+} String ;								// 串类型
+
+typedef struct _StringInformation		// 定义串信息结构
+{
+	String* str ;						// 链串首结点
+	int letters_count ;					// 字母个数
+	int figures_count ;					// 数字个数
+	int space_count ;					// 空格个数
+	int endline_count ;					// 换行符个数
+	int others_count ;					// 其他字符个数
+	int characters_count ;				// 总字符个数
+} StringInformation ;					// 串信息类型
+
+typedef struct _Index					// 定义串索引结构
+{
+	int sub_index ;						// 子串在其父串的位置( 或索引 )
+	struct _Index* next_index ;			// 指向子串的下一个串索引结构的指针
+} Index ;								// 串索引类型
+
+// 字符串操作基本函数及其他相关辅助函数 :
+int StringToUnsignedInt( char* s , int max ) ;				// 字符串转换成无符号整数
+void InitalizeStringInformation( StringInformation* SI , int initalizeAll ) ;// 串信息初始化
+void CreatStringFromArray( String** S , char* cString ) ;	// 从字符数组建立字符串
+int CreatStringFromFile( String** S , char* filePath ) ;	// 从文件建立字符串
+int StringLength( String* S ) ;								// 求串长						
+int StringCompare( String* S1 , String* S2 ) ;				// 串比较
+void StringCopy( String** targetString , String* sourceString ) ;			// 串拷贝
+void SubString( String* S , int index , int subLength , String** subS ) ;	// 子串提取
+int SubStringIndex( String* S , String* subS ) ;			// 求子串在父串首次出现的位置
+int StringInsert( String** S , int index , String* insertedString ) ;		// 串插入
+int SubStringDelete( String** S , int index , int subLength ) ;				// 子串删除
+void PrintString( String* S ) ;												// 串输出
+void PrintIndex( Index* subIndex ) ;						// 子串的所有索引输出
+void PrintStringInformation( StringInformation* SI ) ;		// 串组成信息输出
+void SaveToFile( String* S , char* filePath ) ;				// 保存字符串到文件
+void DestroyString( String** S ) ;							// 串销毁
+void DestroyIndex( Index** subIndex ) ;						// 子串索引销毁
+// 字符串处理扩展函数 :
+int SubStringIndexAll( String* S , String* subS , Index** subIndex ) ;// 查找子串所有索引
+// 广义字符串替换:第一个函数替换特定子串 , 第二个函数替换所有子串 , 替换串为NULL时 , 视为删除
+int SubStringReplaceSingle( String** S , int index , String* subS , String* replaceSubS ) ;
+int SubStringReplaceAll( String** S , String* subS , String* replaceSubS ) ;
+
+
+int main( )
+{
+	StringInformation S , Source ;
+	String* newString = NULL , * replaceString = NULL , * subString , * tempString ;
+	Index* subIndex ;
+	char input[ 200 ] , cString[ 200 ] , filePath[ 200 ] = "" , anotherPath[ 200 ] = "" ;
+	int position , choice , succeed , subLength , count ;
+	InitalizeStringInformation( &S , 1 ) ;
+	InitalizeStringInformation( &Source , 1 ) ;
+	system( "color 1E" ) ;
+	do
+	{
+		system( "cls" ) ;
+		printf( "Designed by Wind Fantasy\n" ) ;
+		printf( "\n\t*-*-*-*-*-*-*-*-*-*-*-*-&lt; 菜单 &gt;-*-*-*-*-*-*-*-*-*-*-*-*\n" ) ;
+		printf( "\t*%55c\n" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "01.读取(文本)文件建立新字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "02.查看源(文本)文件内容和组成信息 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "03.查看当前字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "04.查看当前字符串的组成信息 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "05.查找指定位置开始的指定长度字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "06.查找指定的字符串的位置 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "07.在当前字符串指定的位置插入字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "08.从当前字符串中删除指定的子字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "09.替换当前字符串指定的子字符串 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "10.保存对(文本)文件的修改 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "11.另存为(文本)文件 ;" , '*' ) ;
+		printf( "\t%-9c%-38s%9c\n" , '*' , "00.退出程序 ." , '*' ) ;
+		printf( "\t*%55c\n" , '*' ) ;
+		printf( "\t*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*\n" ) ;
+		printf( "\n请输入一个自然数并按 \"Enter\" 键以执行相应操作 : " ) ;
+		gets( input ) ;
+		choice = StringToUnsignedInt( input , 11 ) ;
+		switch( choice )
+		{
+		case 1:
+			if( S.str != NULL )
+			{
+				printf( "已从文件中建立过字符串,是否要重新建立以替换原有字符串?\n" ) ;
+				printf( "\"是\"请输入y , \"否\"请输入其它字符串或不输入 : " ) ;
+				gets( input ) ;
+				if( ( input[ 0 ] != 'y' && input[ 0 ] != 'Y' ) || input[ 1 ] != '\0' )
+				{
+					printf( "已取消重新建立字符串!\n" ) ;
+					break ;
+				}
+			}
+			tempString = S.str ;
+			printf( "请输入源(文本)文件的绝对路径( 如D:\\Test\\test.txt ) :\n" ) ;
+			gets( filePath ) ;
+			succeed = CreatStringFromFile( &S.str , filePath ) ;
+			if( succeed == SUCCESS )
+			{
+				DestroyString( &tempString ) ;
+				printf( "已成功读取(文本)文件并建立字符串!\n" ) ;
+			}
+			break ;
+		case 2:
+			succeed = CreatStringFromFile( &Source.str , filePath ) ;
+			if( succeed == SUCCESS )
+			{
+				system( "cls" ) ;
+				printf( "源(文本)文件\"%s\"的内容( 不含最后9行 )如下:\n" , filePath ) ;
+				PrintString( Source.str ) ;
+				PrintStringInformation( &Source ) ;
+				DestroyString( &Source.str ) ;
+			}
+			break ;
+		case 3:
+			system( "cls" ) ;
+			printf( "当前字符串( 不含最后一行 )如下 :\n" ) ;
+			PrintString( S.str ) ;
+			break ;
+		case 4:
+			PrintStringInformation( &S ) ;
+			break ;
+		case 5:
+			printf( "请输入子字符串的起始位置 : " ) ;
+			gets( input ) ;
+			position = StringToUnsignedInt( input , -1 ) ;
+			if( position == -1 )
+			{
+				printf( "对不起 , 请你输入合法的位置 !\n" ) ;
+				break ;
+			}
+			printf( "请输入子字符串的长度 : " ) ;
+			gets( input ) ;
+			subLength = StringToUnsignedInt( input , -1 ) ;
+			if( subLength == -1 )
+			{
+				printf( "对不起 , 请你输入合法的字符串长度 !\n" ) ;
+				break ;
+			}
+			SubString( S.str , position , subLength , &subString ) ;
+			if( subString == NULL )
+				printf( "对不起 , 无法输出子字符串 , 请你输入合适的数据 !\n" ) ;
+			else
+			{
+				printf( "你查找的子字符串如下( 不包含最后一行 ) :\n" ) ;
+				PrintString( subString ) ;
+				DestroyString( &subString ) ;
+			}
+			break ;
+		case 6:
+			printf( "请输入将查找的子字符串 :\n" ) ;
+			gets( cString ) ;
+			CreatStringFromArray( &subString , cString ) ;
+			count = SubStringIndexAll( S.str , subString , &subIndex ) ;
+			if( count == FAILURE )
+				printf( "对不起 , 没有找到该字符串 !\n" ) ;
+			else
+				if( count == 1 )
+					printf( "该字符串在当前字符串中的位置是: %d .\n" , subIndex -&gt;sub_index ) ;
+				else
+				{
+					printf( "系统查找到该字符串在父串中的所有出现位置如下 :\n" ) ;
+					PrintIndex( subIndex ) ;
+				}
+			DestroyIndex( &subIndex ) ;
+			DestroyString( &subString ) ;
+			break ;
+		case 7:
+			printf( "请输入将插入字符串的位置 : " ) ;
+			gets( input ) ;
+			position = StringToUnsignedInt( input , -1 ) ;
+			if( position == -1 )
+			{
+				printf( "对不起 , 请输入合法的位置 !\n" ) ;
+				break ;
+			}
+			printf( "请输入将插入的字符串 : " ) ;
+			gets( cString ) ;
+			CreatStringFromArray( &newString , cString ) ;
+			succeed = StringInsert( &S.str , position , newString ) ;
+			if( succeed == SUCCESS )
+				printf( "已成功插入字符串 \"%s\" !\n" , cString ) ;
+			else
+			{
+				printf( "对不起 , 未能成功插入字符串 \"%s\" , 请你输入合适的数据 !\n"
+					, cString ) ;
+				DestroyString( &newString ) ;
+			}
+			break ;
+		case 8:
+			printf( "请输入将删除的子字符串 :\n" ) ;
+			gets( cString ) ;
+			CreatStringFromArray( &subString , cString ) ;
+			count = SubStringIndexAll( S.str , subString , &subIndex ) ;
+			if( count == FAILURE )
+			{
+				printf( "对不起 , 没有找到该字符串 , 无法执行删除!\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			if( count == 1 )
+			{
+				SubStringReplaceSingle( &S.str , subIndex -&gt;sub_index , subString , NULL ) ;
+				printf( "已成功删除子字符串 \"%s\" !\n" , cString ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			printf( "系统查找到该字符串在当前字符串中的所有出现位置如下 :\n" ) ;
+			PrintIndex( subIndex ) ;
+			printf( "\n请你输入将删除的子字符串的位置(输入0删除所有的子字符串) : " ) ;
+			gets( input ) ;
+			position = StringToUnsignedInt( input , -1 ) ;
+			if( position == -1 )
+			{
+				printf( "对不起 , 请输入合法的删除位置 !\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			if( position == 0 )
+			{
+				SubStringReplaceAll( &S.str , subString , NULL ) ;
+				printf( "已成功删除所有的子字符串 \"%s\" !\n" , cString ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			succeed = SubStringReplaceSingle( &S.str , position , subString , NULL ) ;
+			if( succeed == SUCCESS )
+				printf( "已成功删除子字符串 \"%s\" !\n" , cString ) ;
+			else
+				printf( "对不起 , 未能成功删除子字符串 , 请输入合适的删除位置 !\n" ) ;
+			DestroyIndex( &subIndex ) ;
+			DestroyString( &subString ) ;
+			break ;
+		case 9:
+			printf( "请输入将被替换的子字符串 :\n" ) ;
+			gets( cString ) ;
+			CreatStringFromArray( &subString , cString ) ;
+			count = SubStringIndexAll( S.str , subString , &subIndex ) ;
+			if( count == FAILURE )
+			{
+				printf( "对不起 , 没有找到该字符串 , 无法执行替换!\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			if( count == 1 )
+			{
+				position = subIndex -&gt;sub_index ;
+				printf( "请输入一个字符串以替换上面的字符串 :\n" ) ;
+				gets( cString ) ;
+				CreatStringFromArray( &replaceString , cString ) ;
+				SubStringReplaceSingle( &S.str , position , subString , replaceString ) ;
+				printf( "已成功替换子字符串 !\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			printf( "系统查找到该字符串在父串中的所有出现位置如下 :\n" ) ;
+			PrintIndex( subIndex ) ;
+			printf( "\n请你输入将替换的子字符串的位置(输入0替换所有的子字符串) : " ) ;
+			gets( input ) ;
+			position = StringToUnsignedInt( input , -1 ) ;
+			if( position == -1 )
+			{
+				printf( "对不起 , 请输入合法的删除位置 !\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			printf( "请输入一个字符串以替换上面的字符串(不输入则取消本次替换操作) :\n" ) ;
+			gets( cString ) ;
+			if( *cString == '\0' )
+			{
+				printf( "已取消本次替换操作 !\n" ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			CreatStringFromArray( &replaceString , cString ) ;
+			if( position == 0 )
+			{
+				SubStringReplaceAll( &S.str , subString , replaceString ) ;
+				printf( "已成功替换所有的子字符串 !\n" ) ;
+				DestroyString( &replaceString ) ;
+				DestroyIndex( &subIndex ) ;
+				DestroyString( &subString ) ;
+				break ;
+			}
+			succeed = SubStringReplaceSingle( &S.str , position , subString , replaceString ) ;
+			if( succeed == SUCCESS )	// ****
+				printf( "已成功替换子字符串 !\n" ) ;
+			else
+				printf( "对不起 , 你输入的位置不合法 , 未能成功替换子字符串 !\n" ) ;
+			DestroyIndex( &subIndex ) ;
+			DestroyString( &subString ) ;
+			break ;
+		case 10:
+			SaveToFile( S.str , filePath ) ;
+			break ;
+		case 11:
+			printf( "请输入将另存为的文件的绝对路径 :\n" ) ;
+			gets( anotherPath ) ;
+			SaveToFile( S.str , anotherPath ) ;
+			break ;
+		case 0:
+			DestroyString( &S.str ) ;
+			printf( "谢谢你的使用 , 欢迎再次使用 , 再见 !\n" ) ;
+			printf( "请按任意键退出程序. . ." ) ;
+			getch( ) ;
+			return 0 ;
+		default:
+			printf( "对不起 , 输入错误 , 请重新输入 !\n" ) ;
+		}
+		printf( "\n请按任意键返回 \"菜单\" . " ) ;
+		getch( ) ;
+	} while( choice != 0 ) ;
+	return 0 ;
+}
+
+int StringLength( String* S )	// 求串长
+{
+	int length = 0 ;
+	while( S != NULL )			// ( S == NULL ) 即表示为 S 为空串
+	{
+		length ++ ;
+		S = S -&gt;next ;
+	}
+	return length ;
+}
+
+void StringCopy( String** targetString , String* sourceString )	// 串拷贝
+{
+	String* newNode , * tailNode ;
+	if( sourceString == NULL )
+		*targetString = NULL ;									// 空串则直接赋值为NULL
+	else														// 非空串则需另开辟内存空间
+	{
+		*targetString = ( String* )malloc( sizeof( String ) ) ;	// 建立串首结点
+		( *targetString ) -&gt;character = sourceString -&gt;character ;
+		tailNode = *targetString ;
+		sourceString = sourceString -&gt;next ;					// 源串移至其第二个字符
+		while( sourceString != NULL )
+		{
+			newNode = ( String* )malloc( sizeof( String ) ) ;	// 新建结点
+			newNode -&gt;character = sourceString -&gt;character ;	// 子字符复制
+			tailNode -&gt;next = newNode ;							// 新建结点插入到尾结点后
+			tailNode = newNode ;								// 新建结点成为尾结点
+			sourceString = sourceString -&gt;next ;				// 继续复制源串的下一个字符
+		}
+		tailNode -&gt;next = NULL ;								// 尾结点的链域为空( NULL )
+	}
+}
+
+int StringCompare( String* S1 , String* S2 )					// 字符串比较 , 相等返回0
+{
+	while( S1 != NULL && S2 != NULL )
+		if( S1 -&gt;character &gt; S2 -&gt;character )
+			return 1 ;
+		else
+			if( S1 -&gt;character &lt; S2 -&gt;character )
+				return -1 ;
+			else
+				if( S1 -&gt;character == S2 -&gt;character )			// 若相等则继续比较下一字符
+				{
+					S1 = S1 -&gt;next ;
+					S2 = S2 -&gt;next ;
+				}
+	if( S1 != NULL && S2 == NULL )								// 父串比子串大 , 返回1
+		return 1 ;
+	else
+		if( S1 == NULL && S2 != NULL )
+			return -1 ;
+	return 0 ;
+}
+
+void CreatStringFromArray( String** S , char* cString )	// 通过字符数组建立串
+{
+	String* newNode , * tailNode ;
+	if( *cString == '\0' )
+		*S = NULL ;										// 字符数组为空串时,则*S = NULL
+	else
+	{
+		*S = ( String* )malloc( sizeof( String ) ) ;
+		( *S ) -&gt;character = *cString ;
+		tailNode = *S ;
+		cString ++ ;
+		while( *cString )
+		{
+			newNode = ( String* )malloc( sizeof( String ) ) ;
+			newNode -&gt;character = *cString ;
+			tailNode -&gt;next = newNode ;
+			tailNode = newNode ;
+			cString ++ ;
+		}
+		tailNode -&gt;next = NULL ;						// 尾结点的链域为空
+	}
+}
+
+void DestroyString( String** S )				// 串销毁
+{
+	String* traverseNode = *S , * preNode ;
+	while( traverseNode != NULL )
+	{
+		preNode = traverseNode ;				// 记录当前结点
+		traverseNode = traverseNode -&gt;next ;	// 记录下一个要删除的结点
+		free( preNode ) ;						// 删除当前结点并释放( 回收 )其所占的内存空间
+	}
+	*S = NULL ;									// 销毁串*S且成为空串
+}
+
+void DestroyIndex( Index** subIndex )			// 子串索引销毁
+{
+	Index* traverseNode = *subIndex , * preNode ;
+	while( traverseNode != NULL )
+	{
+		preNode = traverseNode ;
+		traverseNode = traverseNode -&gt;next_index ;
+		free( preNode ) ;
+	}
+	*subIndex = NULL ;
+}
+
+void InitalizeStringInformation( StringInformation* SI , int initalizeAll )	// 串信息初始化
+{
+	if( initalizeAll != 0 )
+		SI -&gt;str = NULL ;						// 如果初始化全部信息,则初始化为空串
+	SI -&gt;letters_count = 0 ;					// 字母个数为0
+	SI -&gt;figures_count = 0 ;					// 数字个数为0
+	SI -&gt;space_count = 0 ;						// 空格个数为0
+	SI -&gt;endline_count = 0 ;					// 换行符个数为0
+	SI -&gt;others_count = 0 ;						// 其他字符个数为0
+	SI -&gt;characters_count = 0 ;					// 总字符个数为0
+}
+
+int CreatStringFromFile( String** S , char* filePath )		// 通过读取文本文件建立串
+{
+	FILE* fp ;												// 文件指针
+	String* newNode , * tailNode ;
+	int ch ;
+	if( *filePath == '\0' || ( fp = fopen( filePath , "r" ) ) == NULL )
+	{
+		printf( "对不起 , 无法打开(文本)文件 \"%s\" !\n" , filePath ) ;
+		return FAILURE ;									// 打开指定文件失败返回0
+	}
+	else													// 打开指定文件成功
+	{
+		ch = fgetc( fp ) ;									// 获取文件的第一个字符
+		if( ch == EOF )										// EOF 文件结束标志
+			*S = NULL ;										// 如果是空文件则为空串
+		else
+		{
+			*S = ( String* )malloc( sizeof( String ) ) ;
+			( *S ) -&gt;character = ch ;
+			tailNode = *S ;
+			ch = fgetc( fp ) ;
+			while( ch != EOF )								// 读取字符直至文件指针移至文件尾
+			{
+				newNode = ( String* )malloc( sizeof( String ) ) ;
+				newNode -&gt;character = ch ;
+				tailNode -&gt;next = newNode ;
+				tailNode = newNode ;
+				ch = fgetc( fp ) ;							// 读取下一个字符
+			}
+			tailNode -&gt;next = NULL ;
+		}
+		fclose( fp ) ;										// 关闭文件
+		return SUCCESS ;
+	}
+}
+
+int StringInsert( String** S , int index , String* insertedString )	// 串插入
+{				// 在串*S的第index位置上插入串insertedString
+	int S_length = StringLength( *S ) , i ;
+	String* S_targetNode = *S , * insertedString_tailNode = insertedString ;
+	if( index &lt;= S_length + 1 && index &gt;= 1 && insertedString != NULL )
+				// 合法的串插入位置
+		if( index != 1 )									// 不在串的第一位置插入
+		{
+			for( i = 1 ; i &lt; index - 1 ; i ++ )
+				S_targetNode = S_targetNode -&gt;next ;		// 查找插入串实际位置的前一结点
+			while( insertedString_tailNode -&gt;next != NULL )	// 查找串insertedString的尾结点
+				insertedString_tailNode = insertedString_tailNode -&gt;next ;
+			insertedString_tailNode -&gt;next = S_targetNode -&gt;next ;
+				// insertedString的尾结点的下一结点为目标结点S_targetNode的下一结点
+			S_targetNode -&gt;next = insertedString ;
+				// 将串insertedString插入到目标结点S_targetNode之后
+		}
+		else												//在串的第一位置插入
+		{
+			while( insertedString_tailNode -&gt;next != NULL )	// 查找串insertedString的尾结点
+				insertedString_tailNode = insertedString_tailNode -&gt;next ;
+			insertedString_tailNode -&gt;next = *S ;			// 将insertedString插入到*S之前
+			*S = insertedString ;							// insertedString成为串首结点
+		}
+	else
+		return FAILURE ;
+	return SUCCESS ;
+}
+
+int SubStringDelete( String** S , int index , int subLength )// 子串删除
+{			// 删除串*S自index位置开始的subLength个子字符
+	int i , Length = StringLength( *S ) ;
+	String* targetNode = *S , * traverseNode , * preNode ;
+	if( index - 1 + subLength - 1 &lt; Length && index &gt; 0 && subLength &gt; 0 )
+			// 合法的子串删除位置
+		if( index != 1 )						// 不是从第一位置删除子串
+		{
+			for( i = 1 ; i &lt; index - 1 ; i ++ )	// 查找删除子串实际位置( index )的前一结点
+				targetNode = targetNode -&gt;next ;
+			traverseNode = targetNode -&gt;next ;	// traverse记录第index个结点
+			for( i = 1 ; i &lt;= subLength ; i ++ )// 删除串*S自index开始的subLength个字符
+			{
+				preNode = traverseNode ;
+				traverseNode = traverseNode -&gt;next ;
+				free( preNode ) ;				// 释放( 回收 )删除的结点所占的内存空间
+			}
+			targetNode -&gt;next = traverseNode ;	// 目标结点targetNode下一结点为traverseNode
+		}
+		else									// 从第一位置删除子串
+		{
+			traverseNode = targetNode ;
+			for( i = 1 ; i &lt;= subLength ; i ++ )// 删除串*S的前subLength个字符
+			{
+				preNode = traverseNode ;
+				traverseNode = traverseNode -&gt;next ;
+				free( preNode ) ;
+			}
+			*S = traverseNode ;
+			// traverseNode为删除的最后一个结点的下一结点 , 且成为删除子串后的串首结点
+		}
+	else
+		return FAILURE ;
+	return SUCCESS ;
+}
+
+void SubString( String* S , int index , int subLength , String** subS) // 子串提取			
+{			// 提取串*S自index位置开始的subLength个子字符组成的子串subS
+	int Length = StringLength( S ) , i ;
+	String* newNode , * tailNode ;
+	if( index - 1 + subLength - 1 &lt; Length && index &gt; 0 && subLength &gt; 0 )
+	{		// 合法的子串位置
+		for( i = 1 ; i &lt; index ; i ++ )					// 查找子串位置的结点
+			S = S -&gt;next ;
+		*subS = ( String* )malloc( sizeof( String ) ) ;	// 建立子串首结点
+		( *subS ) -&gt;character = S -&gt;character ;			// 复制首字符
+		tailNode = *subS ;
+		S = S -&gt;next ;
+		for( i = 1 ; i &lt; subLength ; i ++ )				// 复制余下的( subLength - 1 )个字符
+		{
+			newNode = ( String* )malloc( sizeof( String ) ) ;
+			newNode -&gt;character = S -&gt;character ;
+			tailNode -&gt;next = newNode ;
+			tailNode = newNode ;
+			S = S -&gt;next ;
+		}
+		tailNode -&gt;next = NULL ;
+	}
+	else
+		*subS = NULL ;
+}
+
+int SubStringIndex( String* S , String* subS )	// 求子串subS在父串S首次出现的位置
+{			
+	int S_length = StringLength( S ) , subS_length = StringLength( subS ) , index = 1 ;
+	String* S_traverse , * subS_traverse ;
+	if( subS != NULL && S != NULL && subS_length &lt;= S_length )	// 合法的子串
+		while( S != NULL )
+		{
+			S_traverse = S ;									// 确定串匹配的起点
+			subS_traverse = subS ;								// 初始化subS_traverse
+			while( S_traverse != NULL && subS_traverse != NULL )
+				if( S_traverse -&gt;character == subS_traverse -&gt;character )
+				{
+					S_traverse = S_traverse -&gt;next ;
+					subS_traverse = subS_traverse -&gt;next ;		// 若字符相等则继续比较
+				}
+				else											// 否则进入下一趟匹配
+					break ;
+			if( subS_traverse == NULL )							// subS是S的子串
+				return index ;									// 返回子串subS的位置
+			S = S -&gt;next ;										// 进入下一趟匹配
+			index ++ ;											// 子串位置自增1
+		}
+	return FAILURE ;											// 未找到或有非法数据则返回0
+}
+
+void PrintString( String* S )									// 串输出
+{
+	while( S != NULL )
+	{
+		printf( "%c" , S -&gt;character ) ;						// 输出串的各个字符
+		S = S -&gt;next ;
+	}
+}
+
+void PrintIndex( Index* subIndex )								// 子串所有索引输出
+{
+	while( subIndex != NULL )
+	{
+		printf( "%4d " , subIndex -&gt;sub_index ) ;
+		subIndex = subIndex -&gt;next_index ;
+	}
+}
+
+int SubStringReplaceSingle( String** S , int index , String* subS , String* replaceSubS )
+{	// 替换特定位置的子串
+	int subLength ;
+	String* realSubS ;
+	if( subS == NULL )									// 非法的子串
+		return FAILURE ;								// 替换失败
+	subLength = StringLength( subS ) ;
+	SubString( *S , index , subLength , &realSubS ) ;	// 提取实际参考串realSubS
+	if( StringCompare( subS , realSubS ) == 0 )			// 判断subS是否是*S的index位置的子串
+	{
+		SubStringDelete( S , index , subLength ) ;
+		StringInsert( S , index , replaceSubS ) ;		// 若是则替换
+		DestroyString( &realSubS ) ;					// 销毁实际参考串realSubS
+		return SUCCESS ;								// 替换成功
+	}
+	else
+	{
+		DestroyString( &realSubS ) ;
+		return FAILURE ;								// 替换失败
+	}
+}
+
+int SubStringReplaceAll( String** S , String* subS , String* replaceSubS )
+{
+	int index , subLength , replaceLength , position ;
+	String* replaceSubS_Copy , * tailNode ;
+	position = index = SubStringIndex( *S , subS ) ;		// 查找subS在串*S首次出现的位置
+	subLength = StringLength( subS ) ;						// 计算子串subS的长度
+	if( index == 0 )										// 未找到子字符串则返回0
+		return FAILURE ;
+	if( replaceSubS == NULL )								// 若替换成空串则认为删除所有子串
+	{
+		while( index != 0 )
+		{
+			tailNode = *S ;
+			for( index = 1 ; index &lt;= position + subLength - 1 ; index ++ )
+				tailNode = tailNode -&gt;next ;				// tailNode移至下一遍历首结点
+			SubStringDelete( S , position , subLength ) ;	// 删除子字符串
+			index = SubStringIndex( tailNode , subS ) ;		// 查找相对位置index
+			position += index - 1 ;							// 计算下次删除的子串的实际位置
+		}
+		return SUCCESS ;									// 替换成功则返回1
+	}
+	replaceLength = StringLength( replaceSubS ) ;			// 计算替换串的长度
+	while( index != 0 )										// 当还查找的到子串时
+	{
+		StringCopy( &replaceSubS_Copy , replaceSubS ) ;		// 串拷贝
+		tailNode = replaceSubS_Copy ;
+		while( tailNode -&gt;next != NULL )					// 查找新建串的尾结点
+			tailNode = tailNode -&gt;next ;
+		SubStringDelete( S , position , subLength ) ;		// 删除*S的子串subS
+		StringInsert( S , position , replaceSubS_Copy ) ;	// 插入替换串replaceSubS_Copy
+		index = SubStringIndex( tailNode -&gt;next , subS ) ;	// 自tailNode -&gt;next开始查找子串
+															// subS相对tailNode -&gt;next位置
+		position += replaceLength - 1 + index ;				// 计算下次删除的子串的实际位置
+	}
+	return SUCCESS ;
+}
+
+void SaveToFile( String* S , char* filePath )				//	文件保存
+{
+	FILE* fp ;
+	int ch ;
+	if( ( fp = fopen( filePath , "w" ) ) == NULL )			// 非法的文件路径或无空间存储
+		printf( "对不起 , 无法建立文件 !\n" ) ;
+	else													// 文件重写或创建成功
+	{
+		while( S != NULL )
+		{
+			ch = S -&gt;character ;
+			fputc( ch , fp ) ;								// 写入当前字符
+			S = S -&gt;next ;									// 下一个字符将被写入
+		}
+		fclose( fp ) ;										// 关闭文件
+		printf( "成功保存到文件 \"%s\" !\n" , filePath ) ;
+	}
+}
+
+void PrintStringInformation( StringInformation* SI )		// 字符串信息统计与输出
+{
+	String* traverseNode = SI -&gt;str ;
+	char ch ;
+	InitalizeStringInformation( SI , 0 ) ;
+	while( traverseNode != NULL )
+	{
+		ch = traverseNode -&gt;character ;
+		if( ch &lt;= '9' && ch &gt;= '0' )
+			SI -&gt;figures_count ++ ;
+		else
+			if( ( ch &lt;= 'z' && ch &gt;= 'a' ) || ( ch &lt;= 'Z' && ch &gt;= 'A' ) )
+				SI -&gt;letters_count ++ ;
+			else
+				if( ch == ' ' )
+					SI -&gt;space_count ++ ;
+				else
+					if( ch == '\n' )
+						SI -&gt;endline_count ++ ;
+					else
+						SI -&gt;others_count ++ ;
+		SI -&gt;characters_count ++ ;
+		traverseNode = traverseNode -&gt;next ;
+	}
+	printf( "\n字符串组成信息如下 :\n" ) ;
+	printf( "字母字符总数是 : %-5d ;\n" , SI -&gt;letters_count ) ;
+	printf( "数字字符总数是 : %-5d ;\n" , SI -&gt;figures_count ) ;
+	printf( "空格字符总数是 : %-5d ;\n" , SI -&gt;space_count ) ;
+	printf( "换行字符总数是 : %-5d ;\n" , SI -&gt;endline_count ) ;
+	printf( "其他字符总数是 : %-5d ;\n" , SI -&gt;others_count ) ;
+	printf( "所有字符总数是 : %-5d .\n" , SI -&gt;characters_count ) ;
+}
+
+int StringToUnsignedInt( char* s , int max )			// 字符串转换成自然数
+		// s指定要转换的字符串 , max指定转换成的自然数的上限 , 特别地当max &lt; 0时取消上限
+{
+	int resault = 0 ;
+	if( *s == '\0' )									// 空串直接返回-1
+		return -1 ;
+	while( *s &lt;= '9' && *s &gt;= '0' )						// 将有效的数字字符转换成自然数
+	{
+		resault = resault * 10 + ( *s - '0' ) ;
+		s ++ ;
+	}
+	return ( *s == '\0' && ( max &lt; 0 || resault &lt;= max ) ) ? resault : -1 ;
+		// ******** Notice: here is " *s == '\0' " , not " *s = '\0'
+		// 当字符串是由纯数字组成( *s == '\0' )时,不约定上限( max &lt; 0 )时或结果不大于上限
+		// ( resault &lt;= max )时则直接返回结果( resault ) ， 否则返回-1表示非法输入
+}
+
+int SubStringIndexAll( String* S , String* subS , Index** subIndex )// 查找子串的所有索引
+{																	// 返回子串出现的次数
+	int index , position = 0 , count = 0 ;
+	Index* newNode , * tailNode ;
+	index = SubStringIndex( S , subS ) ;
+	if( index == 0 )									// 未查找到串subS
+	{
+		*subIndex = NULL ;
+		return FAILURE ;								// 返回FAILURE , 子串出现次数为0
+	}
+	*subIndex = ( Index* )malloc( sizeof( Index ) ) ;	// 分配内存空间以存储子串所有索引
+	( *subIndex ) -&gt;sub_index = index ;					// 记录第一个索引
+	tailNode = *subIndex ;
+	position ++ ;										// position指定下次遍历的位置
+	count ++ ;											// 出现次数自增1
+	S = S -&gt;next ;										// S移至下次串遍历的起点
+	while( S != NULL )									// 子串出现次数不止一次
+	{
+		index = SubStringIndex( S , subS ) ;			// 继续以下一个字符为起点进行查找
+		if( index != 0 && tailNode -&gt;sub_index != index + position )
+		{												// 找到子串并且索引与上一个不相等时
+			newNode = ( Index* )malloc( sizeof( Index ) ) ;
+			newNode -&gt;sub_index = index + position ;	// 计算索引在串S中的实际位置
+			tailNode -&gt;next_index = newNode ;			// 添加新的索引
+			tailNode = newNode ;						// 新的索引成为尾结点
+			count ++ ;									// 出现次数自增1
+		}
+		position ++ ;									// 准备从下一个字符进行查找
+		S = S -&gt;next ;									// S移至下次串遍历的起点
+	}
+	tailNode -&gt;next_index = NULL ;
+	return count ;										// 返回子串出现次数
+}
+        </pre>
+        </div>
+    </body>
+</html>
