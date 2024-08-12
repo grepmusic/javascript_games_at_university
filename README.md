@@ -1,6 +1,6 @@
 # javascript_games_at_university
 
-<p>git clone and then open file <b>index.html</b> to enjoy!</p>
+<p> visit <a href="https://html-preview.github.io/?url=https://github.com/grepmusic/javascript_games_at_university/blob/main/index.html">works</a> or >git clone and then open file <b>index.html</b> to enjoy!</p>
 <p align="left">
   HTML5 Game: Five or More [JavaScript+HTML5] 2012-08 <br />
   <img src="https://github.com/grepmusic/javascript_games_at_university/blob/main/images/b.png?raw=true">

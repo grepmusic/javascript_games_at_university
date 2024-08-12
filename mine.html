@@ -2,7 +2,7 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="content-type" content="text/html; charset=gbk" />
+<meta http-equiv="content-type" content="text/html; charset=utf8" />
 <title>Mine Game</title>
 
 <style type="text/css">
@@ -153,7 +153,7 @@ function check_if_succeed() {
 			gameOver = true ;
 			clearTimeout( setTimeoutId ) ;
 			setTimeoutId = "have cleared" ;
-			var prpt = "¹§Ï²Äã£¬ÄãÓ®ÁË£¡ÄãµÄ³É¼¨ÊÇ£º" + parseInt(timeCounter.value, 10) + "Ãë (ÔÚÈçÏÂµØÍ¼:" + line + "X" + row + " " + mineCount + "¸öµØÀ×)\nÇëÎÊÊÇ·ñÏëÍæÁíÍâÒ»¾Ö?"
+			var prpt = "æ­å–œä½ ï¼Œä½ èµ¢äº†ï¼ä½ çš„æˆç»©æ˜¯ï¼š" + parseInt(timeCounter.value, 10) + "ç§’ (åœ¨å¦‚ä¸‹åœ°å›¾:" + line + "X" + row + " " + mineCount + "ä¸ªåœ°é›·)\nè¯·é—®æ˜¯å¦æƒ³ç©å¦å¤–ä¸€å±€?"
 			if( confirm( prpt ) ) {
 				set_map( line, row, mineCount, false, false ) ;
 				new_game() ;
@@ -228,7 +228,7 @@ function game_failed( square ) {
 	}
 	if( square.value < 0 )
 		square.style.backgroundColor = "purple" ;
-	if( confirm( "¶Ô²»Æğ£¬ÓÎÏ·Ê§°Ü£¬ÏÂ´ÎºÃÔË£¡\nÇëÎÊÊÇ·ñÏë¼ÌĞøÍæµ±Ç°µÄµØÍ¼£¿" ) == true )
+	if( confirm( "å¯¹ä¸èµ·ï¼Œæ¸¸æˆå¤±è´¥ï¼Œä¸‹æ¬¡å¥½è¿ï¼\nè¯·é—®æ˜¯å¦æƒ³ç»§ç»­ç©å½“å‰çš„åœ°å›¾ï¼Ÿ" ) == true )
 		restart_game() ; // continue current map
 }
 
@@ -319,7 +319,7 @@ function rebuild_table() {
 	td.style.backgroundColor = "pink" ;
 	td.style.cursor = "default" ;
 	td.colSpan = row ; //td.setAttribute( "colspan", row ) ;
-	td.innerHTML = "<button id=\"play\" style=\"background-color:white; cursor:pointer;\" type=\"button\">ĞÂ¾Ö</button> <input style=\"text-align:center; color:blue; background-color:yellow;\" id=\"timecounter\" size=\"4\" type=\"text\" value=\"0000\" readonly=\"readonly\"/" + ">" ;
+	td.innerHTML = "<button id=\"play\" style=\"background-color:white; cursor:pointer;\" type=\"button\">æ–°å±€</button> <input style=\"text-align:center; color:blue; background-color:yellow;\" id=\"timecounter\" size=\"4\" type=\"text\" value=\"0000\" readonly=\"readonly\"/" + ">" ;
 	for( var i=0; i<line; i++ ) {
 		tr = tb.insertRow( i+1 ) ;
 		for( var j=0; j<row; j++ ) {
@@ -346,7 +346,7 @@ function open_options() {
 	var opt = document.getElementById( "option" ) ;
 	opt.onclick = function () {
 		this.title = ( this.title == "open" ) ? "close" : "open" ;
-		this.innerHTML = ( this.innerHTML == "[++] ÓÎÏ·ÉèÖÃ" ) ? "[--] ÓÎÏ·ÉèÖÃ" : "[++] ÓÎÏ·ÉèÖÃ" ;
+		this.innerHTML = ( this.innerHTML == "[++] æ¸¸æˆè®¾ç½®" ) ? "[--] æ¸¸æˆè®¾ç½®" : "[++] æ¸¸æˆè®¾ç½®" ;
 		for( var i=0; i<6; i++ ) {
 			var op = document.getElementById( "option" + i ) ;
 			op.style.visibility = ( op.style.visibility != "hidden" ) ? "hidden" : "visible" ;
@@ -402,18 +402,18 @@ function set_options() {
 		if( !isNaN(lv) && !isNaN(rv) && !isNaN(mv) ) {
 			var i=0 ;
 			if( lv<9 || lv>24 )
-				errMsg += "Warnings: <br /" + ">" + (++i) + ". ĞĞÊıÓ¦¸ÃÔÚ 9ºÍ24 Ö®¼ä!" ;
+				errMsg += "Warnings: <br /" + ">" + (++i) + ". è¡Œæ•°åº”è¯¥åœ¨ 9å’Œ24 ä¹‹é—´!" ;
 			if( rv<9 || rv>30 )
-				errMsg += "<br /" + ">" + (++i) + ". ÁĞÊıÓ¦¸ÃÔÚ 9ºÍ30 Ö®¼ä!" ;
+				errMsg += "<br /" + ">" + (++i) + ". åˆ—æ•°åº”è¯¥åœ¨ 9å’Œ30 ä¹‹é—´!" ;
 			if( mv<10 || mv>lv*rv*9/10 )
-				errMsg += "<br /" + ">" + (++i) + ". µØÀ×ÊıÓ¦¸ÃÔÚ 10ºÍ" + Math.floor(lv*rv*9/10) + " Ö®¼ä!" ;
+				errMsg += "<br /" + ">" + (++i) + ". åœ°é›·æ•°åº”è¯¥åœ¨ 10å’Œ" + Math.floor(lv*rv*9/10) + " ä¹‹é—´!" ;
 			if( errMsg == "" ) {
 				document.getElementById( "show_errors" ).innerHTML = "&nbsp;" ;
 				set_map( lv, rv, mv, false, false ) ;
 				new_game() ;
-				alert( "ÒÑ³É¹¦ÉèÖÃÓÎÏ·!" ) ;
+				alert( "å·²æˆåŠŸè®¾ç½®æ¸¸æˆ!" ) ;
 				
-				document.getElementById( "option" ).innerHTML = "[++] ÓÎÏ·ÉèÖÃ" ;
+				document.getElementById( "option" ).innerHTML = "[++] æ¸¸æˆè®¾ç½®" ;
 				for( var i=0; i<6; i++ ) {
 					var op = document.getElementById( "option" + i ) ;
 					op.style.visibility = "hidden" ;
@@ -422,7 +422,7 @@ function set_options() {
 			}
 		}
 		else
-			errMsg += "Errors: <br /" + ">ÇëÊäÈëÊı×Ö×Ö·û(0-9)!" ;
+			errMsg += "Errors: <br /" + ">è¯·è¾“å…¥æ•°å­—å­—ç¬¦(0-9)!" ;
 		document.getElementById( "show_errors" ).innerHTML = errMsg ;
 	}
 }
@@ -456,7 +456,7 @@ function new_game() {
 function replay() {
 	document.getElementById( "play" ).onclick = function () {
 		if( havePlayed == true && gameOver == false ) {
-			if( !confirm( "ÄãÕıÔÚÍæµ±Ç°µÄµØÍ¼£¬ÇëÎÊÊÇ·ñÏë·ÅÆúµ±Ç°µØÍ¼¶ø½øĞĞÁíÍâµÄÒ»¾Ö?" ) )
+			if( !confirm( "ä½ æ­£åœ¨ç©å½“å‰çš„åœ°å›¾ï¼Œè¯·é—®æ˜¯å¦æƒ³æ”¾å¼ƒå½“å‰åœ°å›¾è€Œè¿›è¡Œå¦å¤–çš„ä¸€å±€?" ) )
 				return ;
 		}
 		set_map( line, row, mineCount, false, false ) ;
@@ -495,38 +495,38 @@ document.ondblclick = function () { return false; }
 </script>
 </head>
 <body bgcolor="#eaf3da">
-<p style="color:#333333;"><span style="font:20px bold; color:blue;">É¨À×</span> --- designed by <span style="font-style:italic; color:orange;">Wind Fantasy</span>, Ï£ÍûÄãÏ²»¶! Çë×î´ó»¯IE»òFirefoxä¯ÀÀÆ÷´°¿ÚÍæÒÔ»ñµÃ×î¼ÑĞ§¹û.</p>
+<p style="color:#333333;"><span style="font:20px bold; color:blue;">æ‰«é›·</span> --- designed by <span style="font-style:italic; color:orange;">Wind Fantasy</span>, å¸Œæœ›ä½ å–œæ¬¢! è¯·æœ€å¤§åŒ–IEæˆ–Firefoxæµè§ˆå™¨çª—å£ç©ä»¥è·å¾—æœ€ä½³æ•ˆæœ.</p>
 <table cellspacing="2" align="left" width="220">
 	<tr>
-		<th colspan="2"><a id="option" href="#" title="close">[--] ÓÎÏ·ÉèÖÃ</a></th>
+		<th colspan="2"><a id="option" href="#" title="close">[--] æ¸¸æˆè®¾ç½®</a></th>
 	</tr>
 	<tr id="option0" class="hide">
 		<td align="right">
-			ÄÑ¶ÈÑ¡Ôñ£º
+			éš¾åº¦é€‰æ‹©ï¼š
 		</td>
 		<td>
 			<select id="difficulty">
-				<option value="easy">ÈİÒ×</option>
-				<option value="normal" selected="selected">Ò»°ã</option>
-				<option value="hard" >½ÏÄÑ</option>
-				<option value="usrdef">×Ô¶¨Òå</option>
+				<option value="easy">å®¹æ˜“</option>
+				<option value="normal" selected="selected">ä¸€èˆ¬</option>
+				<option value="hard" >è¾ƒéš¾</option>
+				<option value="usrdef">è‡ªå®šä¹‰</option>
 			</select>
 		</td>
 	</tr>
 	<tr id="option1" class="hide">
-		<td align="right">ĞĞÊı(9-24):</td>
+		<td align="right">è¡Œæ•°(9-24):</td>
 		<td><input id="user_line" type="text" size="4" maxlength="2" value="16" disabled="disabled" /></td>
 	</tr>
 	<tr id="option2" class="hide">
-		<td align="right">ÁĞÊı(9-30):</td>
+		<td align="right">åˆ—æ•°(9-30):</td>
 		<td><input id="user_row" type="text" size="4" maxlength="2" value="16" disabled="disabled" /></td>
 	</tr>
 	<tr id="option3" class="hide">
-		<td align="right">µØÀ×Êı(10-648):</td>
+		<td align="right">åœ°é›·æ•°(10-648):</td>
 		<td><input id="user_mines" type="text" size="4" maxlength="3" value="40" disabled="disabled" /></td>
 	</tr>
 	<tr id="option4" class="hide">
-		<td colspan="2" align="center"><input id="submit_settings" type="button" value="Ìá½»ÉèÖÃ" disabled="disabled" /></td>
+		<td colspan="2" align="center"><input id="submit_settings" type="button" value="æäº¤è®¾ç½®" disabled="disabled" /></td>
 	</tr>
 	<tr id="option5" class="hide">
 		<td colspan="2" style="color:red; font-size:14px;" id="show_errors">&nbsp;</td>

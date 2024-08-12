@@ -2,7 +2,7 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="content-type" content="text/html; charset=gbk" />
+<meta http-equiv="content-type" content="text/html; charset=utf8" />
 <title>Snake</title>
 <style type="text/css">
 <!--
@@ -106,8 +106,8 @@ function clear_interval() {
 function game_over () {
 	gameover = true;
 	clear_interval();
-	alert("¶Ô²»Æð,ÓÎÏ·½áÊø.\r\nÄãµÄµÃ·ÖÊÇ: " + (snakebody.length-1) + ".");
-	$("state").innerHTML = "ÒÑ½áÊø!";
+	alert("å¯¹ä¸èµ·,æ¸¸æˆç»“æŸ.\r\nä½ çš„å¾—åˆ†æ˜¯: " + (snakebody.length-1) + ".");
+	$("state").innerHTML = "å·²ç»“æŸ!";
 }
 
 function handle_press (key) {
@@ -166,13 +166,13 @@ function handle_press (key) {
 		change(nextpoint, nextcolor);
 		var scr = $("score");
 		if (L < 10) {
-			scr.innerHTML = "µÃ·Ö: 000" + L;
+			scr.innerHTML = "å¾—åˆ†: 000" + L;
 		} else if (L < 100) {
-			scr.innerHTML = "µÃ·Ö: 00" + L;
+			scr.innerHTML = "å¾—åˆ†: 00" + L;
 		} else if (L < 1000) {
-			scr.innerHTML = "µÃ·Ö: 0" + L;
+			scr.innerHTML = "å¾—åˆ†: 0" + L;
 		} else {
-			scr.innerHTML = "µÃ·Ö: " + L;
+			scr.innerHTML = "å¾—åˆ†: " + L;
 		}
 	} else { // haven't eat the next point
 		change(snakebody[0], bgcolor); // chage snake tail's color
@@ -224,9 +224,9 @@ function event_handler( key ) {
 		clear_interval();
 		if (ispaused) {
 			start(direction);
-			$("state").innerHTML = "½øÐÐÖÐ&gt;&gt;...";
+			$("state").innerHTML = "è¿›è¡Œä¸­&gt;&gt;...";
 		} else {
-			$("state").innerHTML = "ÒÑÔÝÍ£||";
+			$("state").innerHTML = "å·²æš‚åœ||";
 		}
 		ispaused = !ispaused;
 	}
@@ -254,8 +254,8 @@ window.onload = function () {
 		ispaused = false;
 		called = false;
 		start( direction );
-		$("state").innerHTML = "½øÐÐÖÐ&gt;&gt;...";
-		$("score").innerHTML = "µÃ·Ö: 0000";
+		$("state").innerHTML = "è¿›è¡Œä¸­&gt;&gt;...";
+		$("score").innerHTML = "å¾—åˆ†: 0000";
 	}
 	$("cycle").onclick = function () { iscycled = !iscycled; }
 	$("spd").onchange = function () {
@@ -271,23 +271,23 @@ window.onload = function () {
 </head>
 <body>
 <div id="prompt">
-Ì°³ÔÉß,Ï£ÍûÄãÏ²»¶! °´wÉÏ,sÏÂ,a×ó,dÓÒ¿ØÖÆÒÆ¶¯·½Ïò,pÔÝÍ£/¼ÌÐø<br />
-<input id="replay" type="button" value="ÖØÍæ" />
-ÓÎÏ·×´Ì¬: <span id="state">½øÐÐÖÐ&gt;&gt;...</span>
-<span id="score">µÃ·Ö: 0000</span>
+è´ªåƒè›‡,å¸Œæœ›ä½ å–œæ¬¢! æŒ‰wä¸Š,sä¸‹,aå·¦,då³æŽ§åˆ¶ç§»åŠ¨æ–¹å‘,pæš‚åœ/ç»§ç»­<br />
+<input id="replay" type="button" value="é‡çŽ©" />
+æ¸¸æˆçŠ¶æ€: <span id="state">è¿›è¡Œä¸­&gt;&gt;...</span>
+<span id="score">å¾—åˆ†: 0000</span>
 </div>
 <div id="snake"></div>
 <div id="config">
-ËÙ¶È:
+é€Ÿåº¦:
 <select name="spd" id="spd">
-<option value="50">20¸ñ/Ãë</option>
-<option value="100">10¸ñ/Ãë</option>
-<option value="200">5¸ñ/Ãë</option>
-<option value="333" selected="selected">3¸ñ/Ãë</option>
-<option value="500">2¸ñ/Ãë</option>
-<option value="1000">1¸ñ/Ãë</option>
+<option value="50">20æ ¼/ç§’</option>
+<option value="100">10æ ¼/ç§’</option>
+<option value="200">5æ ¼/ç§’</option>
+<option value="333" selected="selected">3æ ¼/ç§’</option>
+<option value="500">2æ ¼/ç§’</option>
+<option value="1000">1æ ¼/ç§’</option>
 </select>
-Ç½±Ú¿É´©:
+å¢™å£å¯ç©¿:
 <input name="cycle" id="cycle" type="checkbox" />
 <span style="text-align:center;">Designed By Wind Fantasy &copy; 2010</span>
 </div>
