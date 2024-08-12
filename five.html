@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Works of grepmusic</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <style type="text/css">
+            pre {
+                background-color: #eee;
+            }
+            a {
+                font-weight: bold;
+                color: #080;
+            }
+            a.detail {
+                font-style: italic;
+                color: #008;
+            }
+        </style>
+    </head>
+    <body>
+        <hr color="#f00" />
+        <div>
+            <a name="five-in-a-row" id="five-in-a-row" href="#five-in-a-row">Source Code of Five In A Row [C]:</a>
+            <p>for more details, please visit: <a class="detail" target="_blank" href="http://topic.csdn.net/u/20101106/03/6ac2d7e7-43fe-4baa-989b-f09a8dc62a6c.html">http://topic.csdn.net/u/20101106/03/6ac2d7e7-43fe-4baa-989b-f09a8dc62a6c.html</a></p>
+            <pre>
+/*简陋的五子棋游戏*/
+#include &lt;stdio.h&gt;
+#include &lt;conio.h&gt;
+#include &lt;windows.h&gt;
+#define N 19
+#define SetColor(x) SetConsoleTextAttribute(setcolor,x)
+
+short LineNo_Color=15,RowNo_Color=15,Check_Color=6,X_Color=10,O_Color=12,
+Menu_Color=7,Game_Options_Color=7,Help_Color=7,Open_Sound=1,Auto_Save_Ending=1;
+/*
+以上全局变量依次表示:
+行序号颜色,列序号颜色,棋盘格线颜色,玩家1的棋子'X'颜色,玩家2的棋子'O'颜色,游戏主菜单GAME_MENU颜色,
+游戏设定菜单Game_Options颜色,"关于游戏"的颜色,是否开启游戏提示音,是否开启棋局终局自动保存
+*/
+
+void Init_Chess( int (*a)[N] )/*初始化棋盘,置棋盘上无任何棋子*/
+{
+	int i, j;
+	for( i = 0; i &lt; N; i++ )
+		for( j = 0; j &lt; N; j++ )
+			a[ i ][ j ] = ' ';
+}
+
+int String_to_Int( char* s , int max )/*字符串条件转化成整型*/
+{
+	int i, n = 0;
+	for( i=0; s[ i ] &lt;= '9' && s[ i ] &gt;= '0'; i++ )
+		n = 10 * n + s[ i ] - '0' ; /* " s[ i ] - '0' ", not " s[ i ] - '\0' " */
+		return ( ( s[ i ] == '\0' ) && ( max &lt; 0 || n &lt;= max ) ) ? n : -1;
+}
+/*
+任何一个输入都可以看成是一个不定长的字符串,此函数用来处理非法输入问题,比如输入整型数据时输入了含有字母等非数字字符
+*/
+
+void Print_Chess( int (*a)[N] )/*输出棋局,或者说画棋盘*/
+{
+	int i, j;
+	HANDLE setcolor=GetStdHandle( STD_OUTPUT_HANDLE );
+	SetColor( 11 );/*设定颜色*/
+	printf("Designed by Wind Fantasy\n");
+	SetColor( LineNo_Color );
+	printf("L\\R 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19\n");
+	for( i = 0; i &lt; N; i++ )
+	{
+		SetColor( Check_Color );
+		printf("  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
+		SetColor(RowNo_Color);
+		printf( "%2d" , i + 1 );
+		SetColor( Check_Color );
+		printf("|");
+		for( j = 0; j &lt; N; j++ )
+		{
+			if( a[i][j] == 'X' )
+				SetColor( X_Color );
+			else
+				SetColor( O_Color );
+			printf(" %c " , a[ i ][ j ] );
+			SetColor( Check_Color );
+			printf("|");
+		}
+		printf("\n");
+	}
+	printf("  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
+}
+
+int Game_Over1( int (*a)[N] , int chess_symbol )/* "-"形或者"|"形呈龙(事实上"-"与"|"关于"\"对称) */
+{
+	int i, j, k, l, r;
+	for( i=0; i &lt; N; i++ )
+		for( k=0; k &lt; N-4; k++ )
+		{
+			l=r=0;
+			for( j=k; j &lt; k+5; j++ )/* algorithm error: "j &lt; k+5;" not "j &lt; j+5;" */
+			{
+				if( a[i][j] == chess_symbol )/* "-"形呈龙 */
+					l++;
+				if( a[j][i] == chess_symbol )/* "|"形呈龙 */
+					r++;
+			}
+			if( l == 5 || r == 5 )/*连续的5个棋子在一条直线上时,游戏结束*/
+				return 1;
+		}
+		return 0;
+}
+
+int Game_Over2( int (*a)[N] , int chess_symbol )/* "\"形呈龙 */
+{
+	int i, j, k, m, LeftDown, RightUp;
+	for( m=0; m &lt; N-4; m++ )
+		for( k=0; k &lt; N-4-m; k++ )
+		{
+			RightUp=LeftDown=0;
+			for( i=k , j=k+m;  i &lt; k+5;  i++ , j++ )
+			{
+				if( a[i][j] == chess_symbol )/* 对角线"\"上及其右上方的"\"形呈龙 */
+					RightUp++;
+				if( a[j][i] == chess_symbol )/* 对角线"\"上及其左下方的"\"形呈龙 */
+					LeftDown++;
+			}
+			if( RightUp == 5 || LeftDown == 5 )
+				return 1;
+		}
+		return 0;
+}
+
+int Game_Over3( int (*a)[N] , int chess_symbol )/* "/"形呈龙 */
+{
+	int i, j, k, m, LeftUp, RightDown;
+		for( m=N-1; m &gt;= 4; m-- )
+		for( k=0; k &lt; m + 1 - 4; k++ )
+		{
+			RightDown=LeftUp=0;
+			for( i=k , j= m - k;  i &lt; k+5;  i++ , j-- )
+			{
+				if( a[i][j] == chess_symbol )/* 对角线"/"上及其左上方的"/"形呈龙 */
+					LeftUp++;
+				if( a[N-1-j][N-1-i] == chess_symbol )/* 对角线"/"上及其右下方的"/"形呈龙 */
+					RightDown++;/* 上面应该是 "a[N-1-j][N-1-i] " , 而不是 " a[N-j][N-i] " */
+			}
+			if( RightDown == 5 || LeftUp == 5 )
+				return 1;
+		}
+		return 0;
+}
+/*
+以上三个函数通过遍历棋盘所有的可能呈龙情况以判定游戏是否over了
+*/
+
+int Save_Chess( int (*a)[N] , char* ss )/*保存棋局*/
+{
+	int i, j;
+	FILE* fp;
+	if( strcmp( ss , "save" ) == 0 )/*保存当前未结束的棋局*/
+		if( ( fp = fopen( "Save.sav" , "w" ) ) == NULL )
+		{
+			printf(" Can't open file \"Save.sav\" !\n");
+			return 0;
+		}
+		else
+			printf("当前棋局已经成功保存到存档文件\"Save.sav\"中!\n");
+	else                            /*保存棋局终局*/
+		if( ( fp = fopen( "Ending.txt" , "a" ) ) == NULL )
+		{
+			printf(" Can't open file \"Ending.txt\" !\n");
+			return 0;
+		}
+		else
+			printf("棋局终局已经成功保存到文本文件\"Ending.txt\"中!\n");
+	fprintf( fp , "Designed by Wind Fantasy\n" );
+	fprintf( fp , "L\\R 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19\n" );
+	for( i = 0; i &lt; N; i++ )
+	{
+		fprintf( fp , "  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n" );
+		fprintf( fp , "%2d|" , i + 1 );
+		for( j = 0; j &lt; N; j++ )
+			fprintf( fp , " %c |" , a[ i ][ j ] );
+		fprintf( fp , "\n" );
+	}
+	fprintf( fp , "  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n" );
+	fclose(fp);
+	return 1;
+}
+
+int Save_Options( )/*保存游戏设定*/
+{
+	FILE* fp;
+	if( ( fp = fopen( "Config.ini" , "w" ) ) == NULL )
+	{
+		printf("Can't open file \"Config.ini\" !\n");
+		return 0;
+	}
+	fprintf( fp , "LineNo_Color=%d\nRowNo_Color=%d\nCheck_Color=%d\nX_Color=%d\n" , LineNo_Color ,RowNo_Color , Check_Color , X_Color );
+	fprintf( fp , "O_Color=%d\nMenu_Color=%d\nGame_Options_Color=%d\n" , O_Color , Menu_Color , Game_Options_Color );
+	fprintf( fp , "Help_Color=%d\nOpen_Sound=%d\nAuto_Save_Ending=%d\n" , Help_Color , Open_Sound , Auto_Save_Ending );
+	fclose(fp);
+	printf("当前游戏设定已经成功保存到配置文件\"Config.ini\"中!\n");
+	return 1;
+}
+
+int Load_Chess( int (*a)[N] )/*读取棋局*/
+{
+	int j , k , X_Number =0 , O_Number = 0 ;
+	char c;
+	double i = - 1.5;
+	FILE* fp;
+	if( ( fp = fopen ( "Save.sav" , "r" ) ) == NULL )/*检测存档文件"Save.sav"是否在当前目录下*/
+		return 0;
+	Init_Chess( a );/*先初始化棋盘*/
+	c = fgetc(fp);
+	while( c != EOF )
+	{
+		if( c == 'X' )
+			X_Number++;
+		else
+			if( c == 'O' )
+				O_Number++;
+			c = fgetc(fp);
+	}
+	if( X_Number - O_Number &gt; 1 || X_Number - O_Number &lt; -1 )/*检查棋盘数据是否合法*/
+		return -1;
+	rewind(fp);/*文件指针移至文件首*/
+	c = fgetc(fp);
+	while( c != EOF && i &lt; N )/*确保数组不越界*/
+	{
+		if( c == '\n' )
+		{
+			i += 0.5;
+			k=0;
+		}
+		if( c == 'X' )
+		{
+			j = k / 4 - 1;/*棋盘数据的分布规律*/
+			a[ (int)i ][ j ] = 'X';/*读取档案数据*/
+		}
+		if( c == 'O' )
+		{
+			j = k / 4 - 1;
+			a[ (int)i ][ j ] = 'O';
+		}
+		c=fgetc(fp);
+		k++;
+	}
+	fclose(fp);
+	return X_Number &gt; O_Number ? 2 : 1;/*返回读档后的优先下棋的玩家*/
+}
+
+int Load_Options( )/*读取游戏设定*/
+{
+	char c;
+	short Option_Value[10] = { 0 } , i = 0 ;
+	FILE* fp;
+	if( ( fp = fopen( "Config.ini" , "r" ) ) == NULL )/*检测配置文件"Config.ini"是否在当前目录下*/
+		return 0;
+	c=fgetc(fp);
+	while( c != EOF )
+	{
+		if( c &lt;= '9' && c &gt;= '0' )
+			Option_Value[ i ] = 10 * Option_Value[ i ] + c - '0' ;/*" c - '0' " , not " c "*/
+		if( c == '\n' )
+		{
+			if( Option_Value[ i ] &lt; 1 && i &lt; 8 )/*确保颜色属性值合法,即不小于1*/
+				return -1;
+			i++;
+		}
+		c=fgetc(fp);
+	}
+	fclose(fp);
+	LineNo_Color = Option_Value[0];/*加载配置文件"Config.ini"中的设定*/
+	RowNo_Color = Option_Value[1];
+	Check_Color = Option_Value[2];
+	X_Color = Option_Value[3];
+	O_Color = Option_Value[4];
+	Menu_Color = Option_Value[5];
+	Game_Options_Color = Option_Value[6];
+	Help_Color = Option_Value[7];
+	Open_Sound = Option_Value[8];
+	Auto_Save_Ending = Option_Value[9];
+	return 1;
+}
+
+int Game_Options( )/*游戏设定*/
+{
+	HANDLE setcolor=GetStdHandle(STD_OUTPUT_HANDLE);
+	int temp;
+	short i;
+	char s[10];
+		while(1)
+			{
+				system("cls");
+				SetColor(11);
+				printf("Designed by Wind Fantasy\n");
+				SetColor(Game_Options_Color);
+				printf("*-*-*-*-*-*-*Game_Options*-*-*-*-*-*-*\n");
+                printf(" 1.查看各种颜色的属性值(1-15);\n");
+                printf(" 2.设定行序号的颜色;\n");
+                printf(" 3.设定列序号的颜色;\n");
+                printf(" 4.设定棋局格线(棋盘)的颜色;\n");
+                printf(" 5.设定玩家1的棋子的颜色;\n");
+                printf(" 6.设定玩家2的棋子的颜色;\n");
+                printf(" 7.设定游戏主菜单Game_Menu的颜色;\n");
+                printf(" 8.设定游戏设定菜单Game_Options的颜色;\n");
+                printf(" 9.设定\"关于游戏\"的颜色;\n");
+                printf("10.设定是否开启游戏提示音;\n");
+                printf("11.设定是否开启棋局终局自动保存;\n");
+                printf("12.保存当前设定到配置文件Config.ini中;\n");
+                printf("13.加载配置文件Config.ini中的设定;\n");
+                printf("14.恢复游戏设定至默认值;\n");
+                printf("15.退出游戏设定菜单Game_Options.\n");
+                printf("请输入一个整数以决定你要设定的项目:");
+				scanf("%s",s);
+		        temp = String_to_Int( s , 15 );
+		        switch( temp )
+				{
+				case 1:
+					system("cls");
+					for( i=1 ; i &lt; 16 ; i++ )
+					{
+						SetColor( i );
+						printf( "%d是当前其显示的颜色的属性值!\n" , i );
+					}
+					break;
+				case 2:
+					printf("请输入行序号颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						LineNo_Color = temp;
+						printf("已成功设定行序号的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 3:
+					printf("请输入列序号颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						RowNo_Color = temp;
+						printf("已成功设定列序号的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 4:
+					printf("请输入棋局格线(棋盘)颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						Check_Color = temp;
+						printf("已成功设定棋局格线(棋盘)的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 5:
+					printf("请输入玩家1的棋子(棋子符号'X')颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						X_Color = temp;
+						printf("已成功设定玩家1的棋子的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 6:
+					printf("请输入玩家2的棋子(棋子符号'O')颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+		            if( temp &gt; 0 )
+					{
+						O_Color = temp;
+						printf("已成功设定玩家2的棋子的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 7:
+					printf("请输入游戏主菜单Game_Menu的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Menu_Color = temp;
+						printf("已成功设定游戏主菜单Game_Menu的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 8:
+					printf("请输入游戏设定菜单Game_Options的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Game_Options_Color = temp;
+						printf("已成功设定游戏设定菜单Game_Options的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 9:
+					printf("请输入\"关于游戏\"的颜色的属性值(1-15):");
+					scanf("%s",s);
+					temp = String_to_Int( s , 15 );
+					if( temp &gt; 0 )
+					{
+						Help_Color = temp;
+						printf("已成功设定\"关于游戏\"的颜色!\n");
+					}
+					else
+						printf("非法的颜色属性值!\n");
+					break;
+				case 10:
+					printf("请输入\"yes\"(不含引号\",下同)开启游戏提示音或输入\"no\"关闭游戏提示音:");
+					scanf("%s",s);
+					if( strcmp( s , "yes" ) == 0 )
+					{
+						Open_Sound = 1 ;
+						printf("游戏提示音已开启!\n");
+					}
+					else
+						if( strcmp( s , "no" ) == 0 )
+						{
+							Open_Sound = 0 ;
+							printf("游戏提示音已关闭!\n");
+						}
+						else
+							printf("对不起,输入错误!\n");
+						break;
+				case 11:
+					printf("请输入\"yes\"开启棋局终局自动保存或输入\"no\"关闭自动保存:");
+					scanf("%s",s);
+					if( strcmp( s , "yes" ) == 0 )
+					{
+						Auto_Save_Ending = 1 ;
+						printf("棋局终局自动保存已开启!\n");
+					}
+					else
+						if( strcmp( s , "no" ) == 0 )
+						{
+							Auto_Save_Ending = 0 ;
+							printf("棋局终局自动保存已关闭!\n");
+						}
+						else
+							printf("对不起,输入错误!\n");
+						break;
+				case 12:
+					Save_Options( );
+					break;
+				case 13:
+					temp = Load_Options( );/*读取配置文件"Config.ini"中的游戏设定,并检查配置文件数据是否合法*/
+					if( temp == 0 )
+						printf("对不起,无法打开配置文件\"Config.ini\"!\n请确保配置文件\"Config.ini\"在当前文件夹下.\n");
+					else
+						if( temp == -1 )
+							printf("对不起,无法加载配置文件\"Config.ini\"!因为文件中存在非法数据.\n");
+						else
+							if( temp = 1 )
+							printf("已经成功读取配置文件\"Config.ini\"中的游戏设定!\n");
+					break;
+				case 14:
+					LineNo_Color=15;/*加载游戏设定的默认值*/
+					RowNo_Color=15;
+					Check_Color=6;
+					X_Color=10;
+					O_Color=12;
+					Menu_Color=7;
+					Game_Options_Color=7;
+					Help_Color=7;
+					Open_Sound=1;
+					Auto_Save_Ending=1;
+					printf("游戏设定已经恢复为默认值!\n");
+					break;
+				case 15:
+					return 0;
+				default:
+					printf("对不起,输入错误! 请在游戏设定菜单Game_Options中重新输入.\n");
+				}
+				SetColor( Game_Options_Color );
+				printf("按任意键返回游戏设定菜单Game_Options.");
+		        getch();
+			}
+		return 1;
+}
+
+void About_Game( )/*游戏帮助*/
+{
+	HANDLE setcolor = GetStdHandle( STD_OUTPUT_HANDLE );
+	system(" cls ");
+	SetColor( 11 );
+	printf("Designed by Wind Fantasy\n");
+	SetColor( Help_Color );
+	printf("一个简朴的五子棋游戏，希望你能喜欢!\\&lt;^+^&gt;/\n\n1.游戏规则:\n\n");
+	printf("玩家1和玩家2轮流在棋盘(19X19)上任意空闲位置(没有棋子)放置一个棋子,放置的方法是输入要放置的棋子的位置(即该棋子所在");
+	printf("的行的序号和所在的列的序号,棋盘中L、R分别表示行(Line)、列((Row)),同一玩家所放棋子中任意五个或五个以上棋子较先呈现");
+	printf("连续在同一直线(四种形式|、-、/、\\)上的玩家获胜!\n\n2.游戏操作:\n\n");
+	printf("(1)在游戏主菜单“Game_Menu”中输入相应的数字并回车即可执行相应的操作，第一次玩请先输入5并回车查看游戏帮助，然后返");
+	printf("回“Game_Menu”后输入1并回车选择“新的棋局”开始游戏.“新的棋局”将开始一场新的游戏,棋盘数据将被初始化，在进行“新");
+	printf("的棋局”前有必要的话(比如第n次玩,n&gt;1且是整数)请注意保存之前的棋局;\n\n1/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("(2)“新的棋局”开始后如果中途想返回游戏主菜单“Game_Menu”执行其他操作请在“请输入要放的棋子所在的行(L)的序号:”时");
+	printf("输入“exit”(不含引号,下同)并回车即可，如果想要继续游戏的话请输入2并回车选择“继续当前棋局”，注意“当前棋局”指的");
+	printf("是在游戏程序没有关闭情况下的当前棋局，如果没有进行游戏,则当前棋局则为空棋局;\n\n");
+	printf("(3)如果想保存棋局请在“请输入要放的棋子所在的行(L)的序号:”时输入“save”即可将当前棋局存至存档文件Save.sav中，并");
+	printf("且存档文件会自动在游戏主程序“五子棋.exe”所在的文件夹(目录)下建立，以便下次启动游戏时可以在“游戏主菜单”中输入3");
+	printf("并回车选择“从文件中读取已存档的棋局”继续游戏;\n\n");
+	printf("(4)关于游戏设定中设定颜色时，请在游戏设定菜单“Game_Options”先输入1查看各种颜色对应的属性值(范围1-15)，然后根据个");
+	printf("人喜好(输入颜色的属性值以)设定各个选项的颜色;\n\n");
+	printf("(5)“游戏提示音”是在游戏进行过程中对玩家的非法输入和玩家的获胜进行提醒的,“棋局终局自动保存”是任一玩家获胜后游戏");
+	printf("自动对棋局终局的保存,终局保存在Ending.txt中，以便玩家在游戏结束后对棋局进行研究;\n\n2/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("(6)游戏设定是可以保存在配置文件“Config.ini”中，配置文件中各参数及值(以下是默认值)的意义分别是:LineNo_Color=15(");
+	printf("行序号颜色=亮白)，RowNo_Color=15(列序号颜色=亮白)，Check_Color=6(棋局格线(棋盘)颜色=暗黄)，X_Color=10(玩家1的棋子");
+	printf("颜色=鲜绿)，O_Color=12(玩家2的棋子颜色=鲜红)，Menu_Color=7(游戏主菜单颜色=白)，Game_Options_Color=7(游戏设定菜单");
+	printf("颜色=白)，Help_Color=7(“关于游戏”颜色=白)，Open_Sound=1(是否开启提示音=是)，Auto_Save_Ending=1(是否开启棋局终局");
+	printf("自动保存=是).内行的玩家可以在配置文件中对游戏的各个选项进行设定，但是颜色属性值请控制在1-255，提示音及自动保存的");
+	printf("值只有两个,分别是0(关)和1(开)，注意修改时请不要更改文本内容结构!每次启动游戏时都是先加载Config.ini中的设定，如果");
+	printf("没有Config.ini，则加载默认的设定;\n\n");
+	printf("(7)棋局存档只能存一个，多次存档会覆盖，并且以最后一次存的档案为准，游戏设定存档也是.棋局终局自动保存则是以追加的");
+	printf("方式保存，即每次的棋局终局都将保存，所以此功能请慎用，因为文本文件Ending.txt将随玩家的多次试玩会越来越大，系统默");
+	printf("认是开启自动保存，主要是想让玩家可以预览此项功能\\&lt;^+^&gt;/.如果已开启此功能，请定期清理文件Ending.txt，以免浪费存储");
+	printf("空间.读取档案时请确保相应的存档文件与游戏主程序“五子棋.exe”在同一文件夹(目录)下，而且尽量不要自行修改存档数据，");
+	printf("以免发生错误.\n\n3/4\n按任一键跳至下一页");
+	getch();
+	system("cls");
+
+	printf("3.游戏说明:\n\n(1)启动游戏后请将游戏窗口最大化并将右侧的滚动条滑至最上端以获得最佳的游戏显示效果;\n\n");
+	printf("(2)这是我编的第一个成型游戏，由于本人水平有限，所以游戏界面只能做到如此程度了，甚是简陋，请各位玩家见谅;\n\n");
+	printf("(3)此游戏可以免费传播，但请不要修改游戏程序本身，不得用于商业用途;(*^+^*)\n\n");
+	printf("(4)游戏中遇到任何问题请和Wind Fantasy(QQ:467321916)联系，欢迎各位玩家提出宝贵的意见，同时也希望各位玩家继续关注");
+	printf("Wind Fantasy的其他作品并支持我;\n\n最后祝各位玩家玩得愉快!\n\n\\&lt;^+^&gt;/\n\n4/4\n");
+}
+
+int main()
+{
+	int a[N][N], i, j, player = 1 , temp ;/*玩家1先下棋*/
+	char s[10];
+	HANDLE setcolor=GetStdHandle(STD_OUTPUT_HANDLE);
+	Init_Chess( a );/*初始化棋局*/
+	Load_Options( );/*加载配置文件"Config.ini"中的游戏设定,如果配置文件不在当前目录下,则游戏设定为默认值*/
+	while(1)
+	{
+		system("cls");
+		SetColor( 11 );
+		printf("Designed by Wind Fantasy\n");
+        printf("A simple quintet game,hope you can enjoy!\\&lt;^+^&gt;/\n");
+		SetColor( Menu_Color );
+		printf("*-*-*-*-*GAME_MENU*-*-*-*-*\n");
+		printf("1.新的棋局;\n");
+		printf("2.继续当前棋局;\n");
+		printf("3.从文件中读取已存档的棋局;\n");
+		printf("4.游戏设定;\n");
+		printf("5.关于游戏;\n");
+		printf("6.退出游戏.\n");
+		printf("请先输入一个数(1-6)后按\"Enter\"键执行相应操作:");
+		scanf("%s",s);
+		temp = String_to_Int( s , 6 );
+		switch( temp )
+		{
+		case 1:
+			Init_Chess( a );
+			player = 1;
+loop:
+			while(1)
+			{
+				system("cls");
+			    Print_Chess( a );/*输出即时棋局*/
+				SetColor( Menu_Color );
+		        printf("玩家%d(棋子符号:'" , player );/*游戏玩家下棋提示*/
+				if( player == 1 )
+					SetColor( X_Color );
+				else
+					SetColor( O_Color );
+				printf( "%c" , player == 1 ? 'X' : 'O' );
+				SetColor( Menu_Color );
+				printf("')下棋:\n" );
+			    printf("请输入要放的棋子所在的行(L)的序号:");
+			    scanf("%s",s);
+				if( strcmp( s , "save" ) == 0 )/*输入"save"保存当前棋局至文件"Save.sav"中*/
+				{
+					Save_Chess( a , "save" );
+					break;
+				}
+				else
+					if( strcmp( s , "exit" ) == 0 )/*输入"exit"暂停游戏并返回游戏主菜单GAME_MENU*/
+						break;
+			    i = String_to_Int( s , N );/* 显然, i &lt;= N */
+				if( i &lt; 1 )/*检测输入的数据是否合法*/
+				{
+					if( Open_Sound )/*游戏提示音*/
+						printf("\a");
+				    printf("对不起,输入错误! 请按任意键返回后重新输入棋子位置.");/*输入错误提示*/
+			        getch();
+				}
+			    else
+				{
+				    printf("请输入要放的棋子所在的列(R)的序号:");
+			        scanf("%s",s);
+			        j = String_to_Int( s , N );
+			        if( j &lt; 1 || a[i-1][j-1] != ' ' )/*检测输入的位置是否不合法:即该位置是否有棋子*/
+					{
+						if( Open_Sound )
+							printf("\a");
+					    printf("对不起,输入错误! 请按任意键返回后重新输入棋子位置.");
+			            getch();
+					}
+			        else
+						if( player == 1 )
+						{
+						    a[i-1][j-1]='X';
+						    if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )/*检测玩家1是否胜出*/
+							{
+							    system("cls");
+						        Print_Chess( a );
+								if( Open_Sound )
+									printf("\a\a");
+								SetColor( X_Color );
+						        printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+								if( Auto_Save_Ending )
+									Save_Chess( a , "ending" );
+								break;
+							}
+						    player=2;/*轮到玩家2下棋了*/
+						}
+						else
+						{
+						    a[i-1][j-1]='O';
+					        if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )/*检测玩家2是否胜出*/
+							{
+							    system("cls");
+						        Print_Chess( a );
+								SetColor( O_Color );
+								if( Open_Sound )
+									printf("\a\a");
+						        printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+								if( Auto_Save_Ending )
+									Save_Chess( a , "ending" );
+								break;
+							}
+					        player=1;/*轮到玩家1下棋了*/
+						}
+				}
+			}
+			break;
+		case 2:
+			if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )
+			{
+				system("cls");
+				Print_Chess( a );
+		     	if( Open_Sound )
+					printf("\a\a");
+			    printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+				if( Auto_Save_Ending )
+					Save_Chess( a , "ending" );
+			}
+			else
+				if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )
+				{
+					system("cls");
+				    Print_Chess( a );
+		     	    if( Open_Sound )
+						printf("\a\a");
+			        printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+				    if( Auto_Save_Ending )
+						Save_Chess( a , "ending" );
+				}/*检测棋局是否还有进行下去的必要*/					
+				else
+					goto loop;/*继续当前棋局*/
+				break;
+		case 3:
+			temp = Load_Chess( a );
+			if( temp == 0 )
+				printf("无法打开存档文件\"Save.sav\"!\n请确保存档文件\"Save.sav\"在当前文件夹下.\n");
+			else
+				if( temp == -1 )
+					printf("非法的棋局存档文件!\n");
+				else
+					if( Game_Over1( a , 'X' ) || Game_Over2( a , 'X' ) || Game_Over3( a , 'X' ) )
+					{
+						system("cls");
+				        Print_Chess( a );
+		     	        if( Open_Sound )
+							printf("\a\a");
+						SetColor( X_Color );
+			            printf( "恭喜! 玩家1获胜!\\&lt;^+^&gt;/\n" );
+				        if( Auto_Save_Ending )
+							Save_Chess( a , "ending" );/*保存棋局终局*/
+					}
+					else
+						if( Game_Over1( a , 'O' ) || Game_Over2( a , 'O' ) || Game_Over3( a , 'O' ) )
+						{
+							system("cls");
+				            Print_Chess( a );
+		     	            if( Open_Sound )
+								printf("\a\a");
+							SetColor( O_Color );
+			                printf( "恭喜! 玩家2获胜!\\&lt;^+^&gt;/\n" );
+							if( Auto_Save_Ending )
+								Save_Chess( a , "ending" );
+						}/*检测棋局是否还有进行下去的必要*/					
+						else
+						{
+							player=temp;/*继续存档中的棋局*/
+						    goto loop;
+						}
+						break;
+		case 4:
+			Game_Options( );/*游戏设定*/
+			break;
+		case 5:
+			About_Game( );/*关于游戏*/
+			break;
+		case 6:
+			SetColor( 11 );
+			printf("感谢你的试玩,请继续关注Wind Fantasy的其他作品.\n");
+			SetColor(Menu_Color);
+			printf("按任意键退出游戏.");
+			getch();
+			return 0;
+		default:
+			printf("对不起,输入错误! 请在游戏主菜单GAME_MENU中重新输入.\n");/*错误提示*/
+		}
+		SetColor( Menu_Color );
+		printf("按任意键返回游戏主菜单GAME_MENU.");
+		getch();
+	}
+	return 0;
+}
+            </pre>
+        </div>
+    </body>
+</html>
